@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patinha — cuidados do seu pet</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f2;--card:#fff;--ink:#17302d;--mute:#5d726f;--line:#d6e1de;--acc:#0f766e;--acc-t:#fff;--warn:#fef3c7;--warn-i:#92400e;--ok:#d1fae5;--ok-i:#065f46;--bad:#fee2e2;--bad-i:#991b1b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a19;--card:#162726;--ink:#e6f2ef;--mute:#96aeaa;--line:#2a403d;--acc:#2dd4bf;--acc-t:#06201d;--warn:#3b2f0b;--warn-i:#fcd34d;--ok:#0b3a2c;--ok-i:#6ee7b7;--bad:#431616;--bad-i:#fca5a5}}
+:root[data-theme="dark"]{--bg:#0e1a19;--card:#162726;--ink:#e6f2ef;--mute:#96aeaa;--line:#2a403d;--acc:#2dd4bf;--acc-t:#06201d;--warn:#3b2f0b;--warn-i:#fcd34d;--ok:#0b3a2c;--ok-i:#6ee7b7;--bad:#431616;--bad-i:#fca5a5}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 Nunito,system-ui,sans-serif}
+#app{max-width:430px;margin:0 auto;min-height:100vh;position:relative;padding:16px 16px 96px}
+h1{font-size:26px;font-weight:800;margin:4px 0 14px;letter-spacing:-.3px}h2{font-size:18px;font-weight:800;margin:20px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:12px}.sp{justify-content:space-between}.grow{flex:1;min-width:0}
+.mute{color:var(--mute);font-size:14px}.av{width:46px;height:46px;border-radius:14px;background:var(--bg);display:grid;place-items:center;font-size:24px;flex:none;overflow:hidden}.av img{width:100%;height:100%;object-fit:cover}.big{width:100%;max-height:260px;object-fit:cover;border-radius:16px;margin-bottom:8px;display:block}.chip:focus-within{outline:3px solid var(--acc);outline-offset:2px}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:11px 16px;background:var(--acc);color:var(--acc-t);font-weight:800}
+button.s{background:transparent;color:var(--acc);border:1.5px solid var(--acc)}button.g{background:transparent;color:var(--mute);padding:6px 8px}
+button.d{background:var(--bad);color:var(--bad-i)}button.sm{padding:6px 11px;font-size:14px;border-radius:10px}button.w{width:100%}
+input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);margin:4px 0 12px}
+label{font-weight:600;font-size:14px;color:var(--mute)}label.ck{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-weight:400;margin-bottom:12px}label.ck input{width:20px;margin:2px 0 0}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--ok);color:var(--ok-i)}.tag.p{background:var(--warn);color:var(--warn-i)}.tag.c{background:var(--bad);color:var(--bad-i)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}.chip{flex:none;padding:7px 14px;border-radius:99px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);font-weight:600}.chip.on{background:var(--acc);color:var(--acc-t);border-color:var(--acc)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav div{max-width:430px;margin:0 auto;display:flex}nav button{flex:1;background:none;color:var(--mute);border-radius:0;padding:10px 0;font-size:12px}nav button b{display:block;font-size:20px}nav button.on{color:var(--acc)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10;display:flex;align-items:flex-end;justify-content:center}.sh{background:var(--bg);width:100%;max-width:430px;max-height:90vh;overflow:auto;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.err{background:var(--bad);color:var(--bad-i);padding:10px 12px;border-radius:12px;margin-bottom:12px;font-size:14px}.msg{background:var(--ok);color:var(--ok-i);padding:10px 12px;border-radius:12px;margin-bottom:12px;font-size:14px}
+.empty{text-align:center;color:var(--mute);padding:22px 10px}.lnk{background:none;color:var(--acc);padding:4px;text-decoration:underline}.off{opacity:.6}
+:root{--bg:#f3eeff;--card:#fff;--ink:#1e1147;--mute:#6b5f94;--line:#ddd2ff;--acc:#7c3aed;--acc-t:#fff;--pink:#ec4899;--sun:#ffb800;--warn:#fff1b8;--warn-i:#7a4b00;--ok:#c8f7dc;--ok-i:#046c3b;--bad:#ffd9e4;--bad-i:#b0123d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#150d2e;--card:#21164a;--ink:#f1ecff;--mute:#b3a6e0;--line:#3a2c75;--acc:#a78bfa;--acc-t:#1a0b45;--warn:#4a3a05;--warn-i:#ffd95a;--ok:#0b4a2c;--ok-i:#6ff0a8;--bad:#521232;--bad-i:#ff9fbd}}
+:root[data-theme="dark"]{--bg:#150d2e;--card:#21164a;--ink:#f1ecff;--mute:#b3a6e0;--line:#3a2c75;--acc:#a78bfa;--acc-t:#1a0b45;--warn:#4a3a05;--warn-i:#ffd95a;--ok:#0b4a2c;--ok-i:#6ff0a8;--bad:#521232;--bad-i:#ff9fbd}
+body{background:var(--bg) linear-gradient(180deg,rgba(124,58,237,.16),transparent 240px) no-repeat}
+h1{background:linear-gradient(90deg,var(--acc),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+button{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff}.chip.on{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border-color:transparent}
+.av{background:linear-gradient(135deg,#ffe27a,#ff9ec4)}.card{border-width:2px;box-shadow:0 3px 0 var(--line)}
+.vc{background:var(--card);border:2px solid var(--acc);border-radius:18px;overflow:hidden}.vh{display:flex;justify-content:space-between;padding:12px 14px;color:#fff;font-weight:800;background:linear-gradient(135deg,#7c3aed,#db2777)}
+.vi{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px;border-bottom:2px dashed var(--line)}.vr{display:flex;gap:12px;padding:12px 14px;border-bottom:1px dashed var(--line);align-items:flex-start}.vr:nth-child(even){background:rgba(124,58,237,.07)}
+.vc small{display:block;color:var(--mute);font-size:12px}.vd{min-width:78px}.vs{display:grid;gap:6px;justify-items:end}.late{color:var(--bad-i)}
+.stamp{border:2px solid var(--ok-i);color:var(--ok-i);border-radius:8px;padding:2px 7px;font-size:11px;font-weight:800;transform:rotate(-5deg);display:inline-block}
+</style>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+</head>
+<body><div id="app"></div>
+<script>
+const $=id=>document.getElementById(id),h=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const day=n=>{const d=new Date();d.setDate(d.getDate()+n);d.setHours(10,0,0,0);return d.toISOString().slice(0,16)};
+const TIPOS=['Vacina','Consulta','Medicação','Vermífugo','Banho e tosa'],ESP={Cachorro:'🐶',Gato:'🐱',Outro:'🐾'};
+let S={view:'auth',mode:'login',user:null,err:'',msg:'',sheet:null,petId:null,tab:'geral',fPet:'',fTipo:'',aTipo:'',
+pets:[],events:[],ads:[
+{id:'a1',tipo:'Perdido',nome:'Thor',esp:'Cachorro',local:'Centro',desc:'Vira-lata caramelo, coleira azul. Visto pela última vez perto da praça.',mine:0},
+{id:'a2',tipo:'Adoção',nome:'Mel',esp:'Gato',local:'Bairro Palha',desc:'Gata castrada e vacinada, 2 anos, muito dócil.',mine:0},
+{id:'a3',tipo:'Adoção',nome:'Bidu',esp:'Cachorro',local:'Rio Grande',desc:'Filhote de 4 meses, porte médio, vermifugado.',mine:0}]};
+function seed(){S.fam=[{id:'f1',nome:'Rafael',email:'rafael@exemplo.com',papel:'Editor',st:'pedido'}];S.pets=[
+{id:'p1',nome:'Luna',esp:'Gato',raca:'SRD',nasc:'2021-03-10',peso:'4,2',ativo:1,alergias:[{t:'Frango',c:1}],doencas:[{t:'Rinite leve',c:0}],cuidados:[{t:'Ração hipoalergênica',c:1}],hist:[{t:'Vacina V4 aplicada',c:1},{t:'Castração',c:0}],vac:[{n:'V4 (quádrupla felina)',dose:'1ª dose',d:'2026-02-10',lote:'L2291',vet:'Dra. Camila Reis',prox:'2027-02-10',c:1},{n:'Antirrábica',dose:'Anual',d:'2025-11-20',lote:'R4410',vet:'Dra. Camila Reis',prox:'2026-11-20',c:1}]},
+{id:'p2',nome:'Bob',esp:'Cachorro',raca:'Labrador',nasc:'2019-08-21',peso:'28',ativo:1,alergias:[],doencas:[],cuidados:[{t:'Evitar exercício após refeição',c:0}],hist:[{t:'Consulta de rotina',c:1}],vac:[{n:'V10 (déctupla)',dose:'Anual',d:'2026-01-15',lote:'V8830',vet:'Dr. Paulo Mendes',prox:'2027-01-15',c:1},{n:'Gripe canina',dose:'1ª dose',d:'2026-06-02',lote:'G1207',vet:'',prox:'',c:0}]}];
+S.events=[{id:'e1',pet:'p1',tipo:'Vacina',tit:'Reforço V4',dt:day(2),st:'agendado'},{id:'e2',pet:'p2',tipo:'Consulta',tit:'Check-up anual',dt:day(5),st:'agendado'},{id:'e3',pet:'p1',tipo:'Vermífugo',tit:'Dose mensal',dt:day(9),st:'agendado'}]}
+const pet=id=>S.pets.find(p=>p.id===id),fmt=d=>new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+const uid=()=>Math.random().toString(36).slice(2,9);
+let tmpFoto='';
+const av=x=>`<div class="av">${x&&x.foto?`<img src="${x.foto}" alt="">`:(ESP[x?.esp]||'🐾')}</div>`;
+const photoField=()=>`<label>Foto (opcional)</label><div class="row" style="margin:4px 0 12px"><div class="av" id="pv">${tmpFoto?`<img src="${tmpFoto}" alt="Prévia da foto">`:'📷'}</div><label class="chip" style="cursor:pointer;margin:0;position:relative">${tmpFoto?'Trocar foto':'Escolher foto'}<input type="file" accept="image/*" onchange="pick(this)" style="position:absolute;opacity:0;width:1px;height:1px;margin:0"></label>${tmpFoto?`<button type="button" class="sm g" onclick="tmpFoto='';R()">Remover</button>`:''}</div>`;
+function pick(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,640/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);tmpFoto=c.toDataURL('image/jpeg',.8);R()};im.onerror=()=>{S.err='Não foi possível ler essa imagem. Tente outra foto.';R()};im.src=r.result};r.readAsDataURL(f)}
+function go(v,x){S.view=v;S.sheet=null;S.err='';S.msg='';if(x)Object.assign(S,x);R()}
+function sheet(s){S.sheet=s;S.err='';tmpFoto=(s&&s.t=='pet'&&s.id)?(pet(s.id).foto||''):(s&&s.t=='donoF'?(S.user.foto||''):'');R()}
+function age(n){if(!n)return'';const m=Math.floor((Date.now()-new Date(n))/2629800000);return m>=12?Math.floor(m/12)+' anos':m+' meses'}
+
+/* Tela 1 */
+function auth(){const m=S.mode,E=S.err?`<div class="err" role="alert">${h(S.err)}</div>`:'',M=S.msg?`<div class="msg">${h(S.msg)}</div>`:'';
+return `<div style="padding-top:40px"><div style="font-size:44px">🐾</div><h1>Patinha</h1><p class="mute">Saúde e rotina do seu pet em um só lugar.</p>${E}${M}
+<form onsubmit="event.preventDefault();doAuth()">
+${m=='signup'?`<label for="n">Nome</label><input id="n" autocomplete="name">`:''}
+${m=='signup'?`<label for="cp">CPF</label><input id="cp" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="maskCpf(this)" autocomplete="off">`:''}${m=='signup'?`<label for="ci">Cidade</label><input id="ci" autocomplete="address-level2" placeholder="Ex.: Belo Horizonte">`:''}<label for="em">E-mail</label><input id="em" type="email" autocomplete="email">
+${m!='forgot'?`<label for="pw">Senha</label><input id="pw" type="password" autocomplete="${m=='login'?'current-password':'new-password'}">`:''}
+${m=='signup'?`<label class="ck"><input id="tm" type="checkbox"><span>Li e aceito os <button type="button" class="lnk" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button> e a <button type="button" class="lnk" onclick="sheet({t:'doc',k:'Política de privacidade'})">Política de privacidade</button>.</span></label>`:''}
+<button class="w">${m=='login'?'Entrar':m=='signup'?'Criar conta':'Enviar link de recuperação'}</button></form>
+<div class="row sp" style="margin-top:14px">${m=='login'?`<button class="lnk" onclick="go('auth',{mode:'forgot'})">Esqueci a senha</button><button class="lnk" onclick="go('auth',{mode:'signup'})">Criar conta</button>`:`<button class="lnk" onclick="go('auth',{mode:'login'})">Voltar para o login</button>`}</div>
+<p class="mute" style="margin-top:20px">Pedimos só o necessário: nome, CPF, cidade, e-mail e senha. O CPF fica protegido e aparece parcialmente oculto no seu perfil; a cidade mostra comércios e anúncios da sua região.</p></div>`}
+function maskCpf(i){const d=i.value.replace(/\D/g,'').slice(0,11);i.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
+function cpfOk(c){const d=c.replace(/\D/g,'');if(d.length!=11||/^(\d)\1+$/.test(d))return false;for(const n of[9,10]){let s=0;for(let i=0;i<n;i++)s+=d[i]*(n+1-i);if((s*10%11)%10!=d[n])return false}return true}
+function doAuth(){const m=S.mode,em=$('em').value.trim();
+if(!/^\S+@\S+\.\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
+if(m=='forgot')return S.err='',S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.',R();
+const pw=$('pw').value;if(pw.length<8)return S.err='A senha precisa ter ao menos 8 caracteres.',R();
+let nome=em.split('@')[0],cid='',cpf='';
+if(m=='signup'){nome=$('n').value.trim();if(!nome)return S.err='Informe seu nome.',R();cid=$('ci').value.trim();if(!cid)return S.err='Informe sua cidade.',R();cpf=$('cp').value;if(!cpfOk(cpf))return S.err='Informe um CPF válido.',R();if(!$('tm').checked)return S.err='Para criar a conta, aceite os termos e a política de privacidade.',R()}
+S.user={nome,email:em,tel:'',cidade:cid,cpf,foto:'',msgs:true};seed();go('home')}
+function docSheet(){const k=S.sheet.k;return `<h2>${k}</h2><p class="mute">Texto de exemplo do protótipo. Aqui entra o documento completo, incluindo quais dados são coletados, para quê e como excluí-los.</p><button class="w" onclick="sheet(null)">Fechar</button>`}
+
+/* Tela 2 */
+function evCard(e,act){const p=pet(e.pet);return `<div class="card row ${e.st!='agendado'?'off':''}">${av(p)}<div class="grow"><b>${h(e.tit)}</b><div class="mute">${h(p?.nome)} · ${e.tipo} · ${fmt(e.dt)}</div>${e.st!='agendado'?`<span class="tag ${e.st=='cancelado'?'c':''}">${e.st=='realizado'?'Realizado':'Cancelado'}</span>`:''}</div>${act&&e.st=='agendado'?`<div style="display:grid;gap:6px"><button class="sm" onclick="setEv('${e.id}','realizado')">Realizado</button><button class="sm d" onclick="setEv('${e.id}','cancelado')">Cancelar</button></div>`:''}</div>`}
+const prox=()=>S.events.filter(e=>e.st=='agendado').sort((a,b)=>a.dt.localeCompare(b.dt));
+function home(){const ps=S.pets.filter(p=>p.ativo),pr=prox().slice(0,3);
+return `<h1>Olá, ${h(S.user.nome)}</h1>
+<div class="row"><button class="grow" onclick="sheet({t:'pet'})">+ Adicionar pet</button><button class="grow s" onclick="sheet({t:'ev'})">Agendar cuidado</button></div>
+<h2>Meus pets</h2>${ps.length?`<div class="chips">${ps.map(p=>`<button class="chip" onclick="go('perfil',{petId:'${p.id}',tab:'geral'})">${ESP[p.esp]} ${h(p.nome)}</button>`).join('')}</div>`:'<div class="empty">Nenhum pet ativo. Adicione o primeiro.</div>'}
+<h2>Próximos eventos</h2>${pr.length?pr.map(e=>evCard(e)).join(''):'<div class="empty">Nada agendado.</div>'}`}
+function setEv(id,st){S.events.find(e=>e.id==id).st=st;R()}
+
+/* Tela 3 */
+function pets(){return `<div class="row sp"><h1>Meus pets</h1><button class="sm" onclick="sheet({t:'pet'})">+ Adicionar pet</button></div>
+${S.pets.length?S.pets.map(p=>`<div class="card row ${p.ativo?'':'off'}" onclick="go('perfil',{petId:'${p.id}',tab:'geral'})" style="cursor:pointer">${av(p)}<div class="grow"><b>${h(p.nome)}</b> ${p.ativo?'':'<span class="tag c">Desativado</span>'}<div class="mute">${h(p.raca||p.esp)}${p.nasc?' · '+age(p.nasc):''}</div></div><span class="mute">›</span></div>`).join(''):'<div class="empty">Você ainda não cadastrou pets.</div>'}`}
+function petForm(){const p=S.sheet.id?pet(S.sheet.id):{};return `<h2>${p.id?'Editar pet':'Adicionar pet'}</h2>${S.err?`<div class="err">${S.err}</div>`:''}
+<form onsubmit="event.preventDefault();savePet('${p.id||''}')">${photoField()}<label for="pn">Nome</label><input id="pn" value="${h(p.nome)}">
+<label for="pe">Espécie</label><select id="pe">${Object.keys(ESP).map(k=>`<option ${p.esp==k?'selected':''}>${k}</option>`).join('')}</select>
+<label for="pr">Raça (opcional)</label><input id="pr" value="${h(p.raca)}">
+<label for="pd">Nascimento (opcional)</label><input id="pd" type="date" value="${h(p.nasc)}">
+<label for="pp">Peso em kg (opcional)</label><input id="pp" inputmode="decimal" value="${h(p.peso)}">
+<button class="w">Salvar</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+function savePet(id){const n=$('pn').value.trim();if(!n)return S.err='Informe o nome do pet.',R();
+const d={foto:tmpFoto,nome:n,esp:$('pe').value,raca:$('pr').value.trim(),nasc:$('pd').value,peso:$('pp').value.trim()};
+if(id)Object.assign(pet(id),d);else S.pets.push({id:uid(),ativo:1,alergias:[],doencas:[],cuidados:[],hist:[],...d});S.sheet=null;tmpFoto='';R()}
+function delSheet(){const p=pet(S.sheet.id);return `<h2>Excluir ${h(p.nome)}?</h2><p class="mute">Todos os registros de saúde e eventos deste pet serão apagados. Não dá para desfazer. Se preferir, desative o cadastro.</p><button class="w d" onclick="delPet('${p.id}')">Excluir definitivamente</button><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+function delPet(id){S.pets=S.pets.filter(p=>p.id!=id);S.events=S.events.filter(e=>e.pet!=id);go('pets')}
+
+/* Tela 4 */
+const TABS=[['geral','Geral'],['vac','Vacinas'],['alergias','Alergias'],['doencas','Doenças'],['cuidados','Cuidados'],['hist','Histórico']];
+function perfil(){const p=pet(S.petId),t=S.tab;
+const pend=['alergias','doencas','cuidados','hist'].reduce((n,k)=>n+p[k].filter(r=>!r.c).length,0)+(p.vac||[]).filter(r=>!r.c).length;
+let body='';
+if(t=='geral')body=`<div class="card"><div class="mute">Espécie</div>${p.esp}<div class="mute" style="margin-top:8px">Raça</div>${h(p.raca)||'—'}<div class="mute" style="margin-top:8px">Idade</div>${age(p.nasc)||'—'}<div class="mute" style="margin-top:8px">Peso</div>${p.peso?h(p.peso)+' kg':'—'}</div>
+${pend?`<div class="card"><span class="tag p">${pend} pendente${pend>1?'s':''}</span> <span class="mute">Há registros de saúde aguardando sua confirmação.</span></div>`:''}
+<div class="row"><button class="grow s" onclick="sheet({t:'pet',id:'${p.id}'})">Editar</button><button class="grow s" onclick="p_toggle('${p.id}')">${p.ativo?'Desativar':'Reativar'}</button><button class="grow d" onclick="sheet({t:'del',id:'${p.id}'})">Excluir</button></div>`;
+else if(t=='vac')body=vacCard(p);
+else body=`<div class="mute" style="margin-bottom:10px">${t=='hist'?'Registre vacinas, consultas e procedimentos.':'Informado por você. Confirme quando tiver certeza (por exemplo, após consulta veterinária).'}</div>
+${p[t].length?p[t].map((r,i)=>`<div class="card row sp"><div class="grow">${h(r.t)}<div><span class="tag ${r.c?'':'p'}">${r.c?'Confirmado':'Precisa confirmar'}</span></div></div><div style="display:grid;gap:6px">${r.c?'':`<button class="sm" onclick="conf('${t}',${i})">Confirmar</button>`}<button class="sm g" onclick="rm('${t}',${i})">Remover</button></div></div>`).join(''):'<div class="empty">Nenhum registro.</div>'}
+<form class="row" onsubmit="event.preventDefault();addRec('${t}')"><input id="nr" style="margin:0" placeholder="Novo registro" aria-label="Novo registro"><button class="sm">Adicionar</button></form>`;
+return `<button class="g" onclick="go('pets')">‹ Meus pets</button>${p.foto?`<img class="big" src="${p.foto}" alt="Foto de ${h(p.nome)}">`:''}<h1>${ESP[p.esp]} ${h(p.nome)} ${p.ativo?'':'<span class="tag c">Desativado</span>'}</h1>
+<div class="chips" role="tablist">${TABS.map(([k,l])=>`<button role="tab" class="chip ${t==k?'on':''}" onclick="S.tab='${k}';R()">${l}</button>`).join('')}</div>${body}`}
+const p_toggle=id=>{const p=pet(id);p.ativo=p.ativo?0:1;R()};
+const conf=(t,i)=>{pet(S.petId)[t][i].c=1;R()},rm=(t,i)=>{pet(S.petId)[t].splice(i,1);R()};
+function addRec(t){const v=$('nr').value.trim();if(!v)return;pet(S.petId)[t].push({t:v,c:0});R()}
+
+/* Tela 5 */
+function agenda(){const ps=S.pets.filter(p=>p.ativo);let ev=S.events.slice().sort((a,b)=>a.dt.localeCompare(b.dt)).filter(e=>(!S.fPet||e.pet==S.fPet)&&(!S.fTipo||e.tipo==S.fTipo));
+const chip=(k,v,l)=>`<button class="chip ${S[k]==v?'on':''}" onclick="S.${k}='${v}';R()">${l}</button>`;
+return `<div class="row sp"><h1>Agenda</h1><button class="sm" onclick="sheet({t:'ev'})">+ Evento</button></div>
+<div class="chips">${chip('fPet','','Todos os pets')}${ps.map(p=>chip('fPet',p.id,p.nome)).join('')}</div>
+<div class="chips">${chip('fTipo','','Todos os cuidados')}${TIPOS.map(t=>chip('fTipo',t,t)).join('')}</div>
+${ev.length?ev.map(e=>evCard(e,1)).join(''):'<div class="empty">Nenhum evento com esses filtros.</div>'}`}
+function evForm(){const ps=S.pets.filter(p=>p.ativo);if(!ps.length)return `<h2>Agendar cuidado</h2><p class="mute">Cadastre um pet ativo antes de criar eventos.</p><button class="w" onclick="sheet(null)">Ok</button>`;
+return `<h2>Agendar cuidado</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveEv()">
+<label for="ep">Pet</label><select id="ep">${ps.map(p=>`<option value="${p.id}">${h(p.nome)}</option>`).join('')}</select>
+<label for="et">Tipo de cuidado</label><select id="et">${TIPOS.map(t=>`<option>${t}</option>`).join('')}</select>
+<label for="ei">Descrição</label><input id="ei" placeholder="Ex.: reforço da vacina">
+<label for="ed">Data e hora</label><input id="ed" type="datetime-local" value="${day(1)}"><button class="w">Salvar evento</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+function saveEv(){const t=$('ei').value.trim()||$('et').value,d=$('ed').value;if(!d)return S.err='Informe a data e a hora.',R();
+S.events.push({id:uid(),pet:$('ep').value,tipo:$('et').value,tit:t,dt:d,st:'agendado'});S.sheet=null;R()}
+
+/* Tela 6 */
+function anuncios(){const l=S.ads.filter(a=>!S.aTipo||a.tipo==S.aTipo);
+return `<div class="row sp"><h1>Anúncios</h1><button class="sm" onclick="sheet({t:'ad'})">+ Anunciar</button></div>
+<div class="chips">${['','Perdido','Adoção'].map(v=>`<button class="chip ${S.aTipo==v?'on':''}" onclick="S.aTipo='${v}';R()">${v||'Todos'}</button>`).join('')}</div>
+<p class="mute">Anúncios mostram só dados do animal e região. O contato acontece pelo app, sem expor seu e-mail.</p>
+${l.length?l.map(a=>`<div class="card"><div class="row"><div class="av">${ESP[a.esp]}</div><div class="grow"><b>${h(a.nome)}</b><div class="mute">${a.esp} · ${h(a.local)}</div></div><span class="tag ${a.tipo=='Perdido'?'c':''}">${a.tipo}</span></div>${a.foto?`<img class="big" style="margin-top:10px" src="${a.foto}" alt="Foto de ${h(a.nome)}">`:''}<p>${h(a.desc)}</p>${a.mine?`<button class="sm d" onclick="S.ads=S.ads.filter(x=>x.id!='${a.id}');R()">Remover meu anúncio</button>`:`<button class="sm" onclick="sheet({t:'msg',id:'${a.id}'})">Enviar mensagem</button>`}</div>`).join(''):'<div class="empty">Nenhum anúncio nesta categoria.</div>'}`}
+function adForm(){return `<h2>Novo anúncio</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveAd()">${photoField()}<p class="mute" style="margin:-6px 0 12px">Use uma foto só do animal, sem pessoas ou placas de endereço.</p>
+<label for="at">Tipo</label><select id="at"><option>Perdido</option><option>Adoção</option></select>
+<label for="an">Nome do animal</label><input id="an"><label for="ae">Espécie</label><select id="ae">${Object.keys(ESP).map(k=>`<option>${k}</option>`).join('')}</select>
+<label for="al">Bairro ou região</label><input id="al" placeholder="Evite endereço exato"><label for="ad">Descrição</label><textarea id="ad" rows="3"></textarea><button class="w">Publicar anúncio</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+function saveAd(){const n=$('an').value.trim(),l=$('al').value.trim();if(!n||!l)return S.err='Informe o nome e a região.',R();
+S.ads.unshift({id:uid(),foto:tmpFoto,tipo:$('at').value,nome:n,esp:$('ae').value,local:l,desc:$('ad').value.trim(),mine:1});S.sheet=null;tmpFoto='';R()}
+const msgSheet=()=>`<h2>Mensagem ao anunciante</h2><p class="mute">No app real, a conversa fica dentro do Patinha e o anunciante só vê seu primeiro nome.</p><textarea rows="3" aria-label="Mensagem"></textarea><button class="w" onclick="sheet(null)">Enviar</button><button class="w g" onclick="sheet(null)">Cancelar</button>`;
+
+const ini=u=>(u.nome||'?').trim()[0].toUpperCase();
+function dono(){const u=S.user,ps=S.pets.filter(p=>p.ativo).length,ev=prox().length,k=(l,v,f)=>`<div class="mute" style="margin-top:8px">${l}</div>${v?h(v):f}`;
+return `<h1>Meu perfil</h1>${S.msg?`<div class="msg">${h(S.msg)}</div>`:''}
+<div class="card row"><div class="av" style="width:64px;height:64px;font-size:28px;font-weight:800">${u.foto?`<img src="${u.foto}" alt="Sua foto">`:h(ini(u))}</div><div class="grow"><b>${h(u.nome)}</b><div class="mute">${h(u.email)}</div></div></div>
+<h2>Dados da conta</h2><div class="card">${k('Nome',u.nome)}${k('E-mail',u.email)}${k('CPF',u.cpf?'•••.'+u.cpf.slice(4,11)+'-••':'','Não informado')}${k('Telefone (opcional)',u.tel,'Não informado')}${k('Cidade ou região (opcional)',u.cidade,'Não informada')}<div style="margin-top:12px"><button class="sm s" onclick="sheet({t:'donoF'})">Editar dados</button></div></div>
+<h2>Resumo</h2><div class="card row sp"><div><b>${ps}</b><div class="mute">pets ativos</div></div><div><b>${ev}</b><div class="mute">eventos agendados</div></div><div><b>${S.ads.filter(a=>a.mine).length}</b><div class="mute">anúncios seus</div></div></div>
+${famSec()}<h2>Privacidade</h2><div class="card"><label class="ck"><input type="checkbox" ${u.msgs!==false?'checked':''} onchange="S.user.msgs=this.checked"><span>Permitir mensagens de outras pessoas pelos meus anúncios</span></label><div class="mute">Seu e-mail, telefone e senha nunca aparecem para outros usuários. Os anúncios mostram só o animal e a região.</div></div>
+<h2>Segurança</h2><button class="s w" onclick="sheet({t:'pw'})">Alterar senha</button>
+<h2>Sua conta</h2><div class="row" style="margin-bottom:10px"><button class="sm s grow" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button><button class="sm s grow" onclick="sheet({t:'doc',k:'Política de privacidade'})">Privacidade</button></div>
+<button class="s w" style="margin-bottom:10px" onclick="S.user=null;S.mode='login';go('auth')">Sair</button><button class="d w" onclick="sheet({t:'acc'})">Excluir minha conta</button>`}
+function donoForm(){const u=S.user;return `<h2>Editar dados</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveDono()">${photoField()}<label for="dn">Nome</label><input id="dn" value="${h(u.nome)}" autocomplete="name"><label for="de">E-mail</label><input id="de" type="email" value="${h(u.email)}" autocomplete="email"><label for="dt">Telefone (opcional)</label><input id="dt" type="tel" value="${h(u.tel)}" autocomplete="tel"><label for="dc">Cidade ou região (opcional)</label><input id="dc" value="${h(u.cidade)}"><button class="w">Salvar dados</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+function saveDono(){const n=$('dn').value.trim(),e=$('de').value.trim();if(!n)return S.err='Informe seu nome.',R();if(!/^\S+@\S+\.\S+$/.test(e))return S.err='Informe um e-mail válido.',R();Object.assign(S.user,{nome:n,email:e,tel:$('dt').value.trim(),cidade:$('dc').value.trim(),foto:tmpFoto});S.sheet=null;S.msg='Dados atualizados.';tmpFoto='';R()}
+function pwForm(){return `<h2>Alterar senha</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();savePw()"><label for="p0">Senha atual</label><input id="p0" type="password" autocomplete="current-password"><label for="p1">Nova senha</label><input id="p1" type="password" autocomplete="new-password"><label for="p2">Repita a nova senha</label><input id="p2" type="password" autocomplete="new-password"><button class="w">Salvar nova senha</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+function savePw(){if(!$('p0').value)return S.err='Informe a senha atual.',R();if($('p1').value.length<8)return S.err='A nova senha precisa ter ao menos 8 caracteres.',R();if($('p1').value!==$('p2').value)return S.err='As senhas não coincidem.',R();S.sheet=null;S.msg='Senha alterada.';R()}
+const accSheet=()=>`<h2>Excluir sua conta?</h2><p class="mute">Apagamos seus dados, seus pets, os eventos e os anúncios que você publicou. Não dá para desfazer.</p><button class="w d" onclick="S.user=null;S.pets=[];S.events=[];S.ads=S.ads.filter(a=>!a.mine);S.mode='login';go('auth',{msg:'Sua conta e seus dados foram excluídos.'})">Excluir conta e dados</button><button class="w g" onclick="sheet(null)">Cancelar</button>`;
+const fd=d=>d?new Date(d+'T12:00').toLocaleDateString('pt-BR'):'—';
+const cv=i=>conf('vac',i),rv=i=>rm('vac',i),openVac=()=>{scan={st:'',recs:[],msg:''};sheet({t:'vac'})},openShop=()=>sheet({t:'shop'});
+function vacCard(p){const hoje=new Date().toISOString().slice(0,10),v=(p.vac=p.vac||[]).map((x,i)=>({...x,i})).sort((a,b)=>a.d.localeCompare(b.d));
+return `<div class='vc'><div class='vh'><span>💉 Cartão de vacinação</span><span>${ESP[p.esp]}</span></div><div class='vi'><div><small>Nome</small><b>${h(p.nome)}</b></div><div><small>Espécie</small><b>${p.esp}</b></div><div><small>Raça</small><b>${h(p.raca)||'—'}</b></div><div><small>Nascimento</small><b>${fd(p.nasc)}</b></div></div>${v.length?v.map(x=>{const at=x.prox&&x.prox<hoje;return `<div class='vr'><div class='vd'><b>${fd(x.d)}</b><small>${h(x.dose)}</small></div><div class='grow'><b>${h(x.n)}</b><small>Lote ${h(x.lote)||'—'} · ${h(x.vet)||'Vet. não informado'}</small>${x.prox?`<small>Próxima dose: <b class='${at?'late':''}'>${fd(x.prox)}</b>${at?' (atrasada)':''}</small>`:''}</div><div class='vs'>${x.c?`<span class='stamp'>Confirmado</span>`:`<button class='sm' onclick='cv(${x.i})'>Confirmar</button>`}<button class='sm g' onclick='rv(${x.i})'>Remover</button></div></div>`}).join(''):`<div class='empty'>Nenhuma vacina registrada.</div>`}</div><button class='w' style='margin-top:12px' onclick='openVac()'>+ Registrar vacina</button><p class='mute'>Informe a data da próxima dose para criar um lembrete na Agenda.</p>`}
+function vacForm(){const p=pet(S.petId),L=p.esp=='Gato'?['V3 (tríplice felina)','V4 (quádrupla felina)','V5 (quíntupla felina)','Antirrábica','FeLV']:['V8 (óctupla)','V10 (déctupla)','Antirrábica','Gripe canina','Giárdia','Leishmaniose'];
+return `<h2>Registrar vacina</h2>${scanBox()}<p class='mute' style='margin-top:14px'>Ou preencha manualmente:</p>${S.err?`<div class='err'>${S.err}</div>`:''}<form onsubmit='event.preventDefault();saveVac()'><label for='vn'>Vacina</label><input id='vn' list='vl' placeholder='Escolha ou digite'><datalist id='vl'>${L.map(x=>`<option value='${x}'>`).join('')}</datalist><label for='vo'>Dose</label><select id='vo'>${['1ª dose','2ª dose','3ª dose','Reforço','Anual'].map(x=>`<option>${x}</option>`).join('')}</select><label for='vd'>Data de aplicação</label><input id='vd' type='date' value='${new Date().toISOString().slice(0,10)}'><label for='vt'>Lote (opcional)</label><input id='vt'><label for='vv'>Veterinário (opcional)</label><input id='vv'><label for='vp'>Próxima dose (opcional)</label><input id='vp' type='date'><button class='w'>Salvar no cartão</button></form><button class='w g' onclick='sheet(null)'>Cancelar</button>`}
+function saveVac(){const n=$('vn').value.trim(),d=$('vd').value,x=$('vp').value;if(!n||!d)return S.err='Informe a vacina e a data de aplicação.',R();const p=pet(S.petId);(p.vac=p.vac||[]).push({n,dose:$('vo').value,d,lote:$('vt').value.trim(),vet:$('vv').value.trim(),prox:x,c:0});if(x)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+n,dt:x+'T10:00',st:'agendado'});S.sheet=null;R()}
+const CATS=['Pet shop','Casa de ração','Veterinário','Banho e tosa','Hotel e creche','Farmácia vet.'],CI={'Pet shop':'🛍️','Casa de ração':'🌾','Veterinário':'🩺','Banho e tosa':'🛁','Hotel e creche':'🏨','Farmácia vet.':'💊'};
+const SH=[{n:'Pet Shop Cantinho Feliz',c:'Pet shop',b:'Centro',h:'Seg a sáb, 8h às 18h',s:'Acessórios, brinquedos, petiscos e roupinhas',fav:0},{n:'Casa de Ração Boa Safra',c:'Casa de ração',b:'Zona norte',h:'Seg a sáb, 7h às 18h',s:'Rações a granel e embaladas, areia higiênica, entrega local',fav:0},{n:'Clínica Veterinária Vida Animal',c:'Veterinário',b:'Centro',h:'Plantão 24 horas',s:'Consultas, vacinas, exames e cirurgias',u:1,fav:0},{n:'Pelo Macio Banho e Tosa',c:'Banho e tosa',b:'Zona sul',h:'Ter a sáb, 9h às 17h',s:'Banho, tosa higiênica e hidratação, com leva e traz',fav:0},{n:'Hotelzinho Patas Felizes',c:'Hotel e creche',b:'Bairro Jardim',h:'Todos os dias, 7h às 19h',s:'Hospedagem e creche diária',fav:0},{n:'Vet Saúde Farmácia',c:'Farmácia vet.',b:'Centro',h:'Seg a sex, 8h às 18h',s:'Medicamentos, antiparasitários e suplementos',fav:0}];
+let sF=0;const setF=j=>{sF=j;R()},fav=i=>{SH[i].fav=SH[i].fav?0:1;R()},det=i=>sheet({t:'shopd',i});
+function lojas(){const L=['','★',...CATS],f=L[sF],cid=S.user.cidade;
+return `<div class='row sp'><h1>Comércios</h1><button class='sm' onclick='openShop()'>+ Indicar</button></div><p class='mute'>${cid?'Região: '+h(cid)+'. ':'Informe sua cidade em Perfil para filtrar por região. '}Os locais abaixo são exemplos fictícios do protótipo.</p><div class='chips'>${L.map((v,j)=>`<button class='chip ${sF==j?'on':''}' onclick='setF(${j})'>${j==0?'Todos':j==1?'★ Favoritos':v}</button>`).join('')}</div>${SH.map((x,i)=>(!f||(f=='★'?x.fav:x.c==f))?`<div class='card'><div class='row'><div class='av'>${CI[x.c]}</div><div class='grow'><b>${h(x.n)}</b><div class='mute'>${h(x.b)} · ${h(x.h)}</div></div><button class='g' aria-label='Favoritar' onclick='fav(${i})' style='font-size:24px;color:var(--sun)'>${x.fav?'★':'☆'}</button></div><div style='margin:8px 0'><span class='tag ${x.pend?'p':''}'>${x.pend?'Em análise':x.c}</span> ${x.u?`<span class='tag c'>Plantão</span>`:''}</div><div class='mute'>${h(x.s)}</div><button class='sm s' style='margin-top:10px' onclick='det(${i})'>Ver detalhes</button></div>`:'').join('')||`<div class='empty'>Nenhum comércio nesta categoria.</div>`}`}
+function shopDet(){const x=SH[S.sheet.i],r=(l,v)=>`<div class='mute' style='margin-top:8px'>${l}</div>${h(v)}`;return `<h2>${CI[x.c]} ${h(x.n)}</h2><div class='card'>${r('Categoria',x.c)}${r('Região',x.b+(S.user.cidade?', '+S.user.cidade:''))}${r('Horário',x.h)}${r('Serviços',x.s)}</div><p class='mute'>No app real, aqui entram endereço completo, telefone, WhatsApp e rota no mapa.</p><button class='w' onclick='sheet(null)'>Fechar</button>`}
+function shopForm(){return `<h2>Indicar comércio</h2>${S.err?`<div class='err'>${S.err}</div>`:''}<form onsubmit='event.preventDefault();saveShop()'><label for='sn'>Nome</label><input id='sn'><label for='sc'>Categoria</label><select id='sc'>${CATS.map(c=>`<option>${c}</option>`).join('')}</select><label for='sb'>Bairro ou região</label><input id='sb'><label for='sh'>Horário (opcional)</label><input id='sh'><label for='ss'>Serviços (opcional)</label><input id='ss'><button class='w'>Enviar indicação</button></form><p class='mute'>A indicação fica em análise até ser verificada.</p><button class='w g' onclick='sheet(null)'>Cancelar</button>`}
+function saveShop(){const n=$('sn').value.trim(),b=$('sb').value.trim();if(!n||!b)return S.err='Informe o nome e a região.',R();SH.push({n,c:$('sc').value,b,h:$('sh').value.trim()||'Horário não informado',s:$('ss').value.trim()||'—',fav:0,pend:1});S.sheet=null;R()}
+const openInv=()=>sheet({t:'inv'}),famOk=i=>sheet({t:'famP',i}),famDel=i=>{S.fam.splice(i,1);R()},famAcc=i=>{const m=S.fam[i];m.st='ativo';m.nome=m.nome||m.email.split('@')[0];R()};
+function famSec(){const F=S.fam||[],pd=F.filter(m=>m.st=='pedido'),rest=F.filter(m=>m.st!='pedido');
+return `<h2>Família e acesso compartilhado</h2><div class='card'><div class='row sp'><b>${h(S.user.nome)}</b><span class='tag'>Responsável principal</span></div><p class='mute'>Você decide quem acessa os pets. Só quem você autorizar vê os dados, e você pode remover o acesso quando quiser.</p>${pd.map(m=>`<div class='card' style='border-color:var(--sun)'><b>${h(m.nome)}</b> pediu acesso<div class='mute'>${h(m.email)}</div><div class='row' style='margin-top:8px'><button class='sm' onclick='famOk(${F.indexOf(m)})'>Autorizar</button><button class='sm d' onclick='famDel(${F.indexOf(m)})'>Recusar</button></div></div>`).join('')}${rest.map(m=>`<div class='row sp' style='padding:8px 0;border-top:1px dashed var(--line)'><div class='grow'><b>${h(m.nome||m.email)}</b><div class='mute'>${h(m.email)}</div><span class='tag ${m.st=='ativo'?'':'p'}'>${m.st=='ativo'?'Acesso ativo':'Convite enviado'}</span> <span class='tag'>${m.papel}</span></div><div style='display:grid;gap:6px'>${m.st=='ativo'?`<button class='sm s' onclick='famOk(${F.indexOf(m)})'>Alterar permissão</button>`:`<button class='sm s' onclick='famAcc(${F.indexOf(m)})'>Simular aceite</button>`}<button class='sm g' onclick='famDel(${F.indexOf(m)})'>Remover</button></div></div>`).join('')}<button class='w' style='margin-top:10px' onclick='openInv()'>+ Convidar pessoa</button></div><div class='card mute' style='font-size:14px'><b style='color:var(--ink)'>O que cada permissão faz</b><br>Visualizador: vê pets, vacinas e agenda.<br>Editor: também registra vacinas, saúde e eventos.<br>Só o responsável principal exclui pets, gerencia pessoas e altera a conta.</div>`}
+function famPForm(){const m=S.fam[S.sheet.i];return `<h2>${m.st=='pedido'?'Autorizar acesso':'Alterar permissão'}</h2><p class='mute'>${h(m.nome||m.email)} · ${h(m.email)}</p><label for='fr'>Permissão</label><select id='fr'><option ${m.papel=='Visualizador'?'selected':''}>Visualizador</option><option ${m.papel=='Editor'?'selected':''}>Editor</option></select><button class='w' onclick='saveFam()'>${m.st=='pedido'?'Autorizar':'Salvar'}</button><button class='w g' onclick='sheet(null)'>Cancelar</button>`}
+function saveFam(){const m=S.fam[S.sheet.i];m.papel=$('fr').value;m.st='ativo';S.sheet=null;S.msg='Permissão atualizada.';R()}
+function invForm(){return `<h2>Convidar pessoa</h2>${S.err?`<div class='err'>${S.err}</div>`:''}<p class='mute'>Ex.: seu parceiro ou sua parceira, ou alguém da família que cuida do pet. A pessoa precisa aceitar o convite.</p><form onsubmit='event.preventDefault();saveInv()'><label for='ie'>E-mail da pessoa</label><input id='ie' type='email'><label for='ir'>Permissão</label><select id='ir'><option>Editor</option><option>Visualizador</option></select><button class='w'>Enviar convite</button></form><button class='w g' onclick='sheet(null)'>Cancelar</button>`}
+function saveInv(){const e=$('ie').value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(e))return S.err='Informe um e-mail válido.',R();if(e==S.user.email.toLowerCase()||S.fam.some(m=>m.email==e))return S.err='Essa pessoa já está na lista.',R();S.fam.push({id:uid(),nome:'',email:e,papel:$('ir').value,st:'convite'});S.sheet=null;S.msg='Convite enviado para '+e+'.';R()}
+let scan={st:'',recs:[],msg:''};
+const isoD=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s:'';
+function shrink(f){return new Promise((ok,no)=>{const r=new FileReader();r.onerror=()=>no({code:'image_rejected'});r.onload=()=>{const im=new Image();im.onerror=()=>no({code:'image_rejected'});im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);c.toBlob(b=>b?ok(b):no({code:'image_rejected'}),'image/jpeg',.85)};im.src=r.result};r.readAsDataURL(f)})}
+async function readCard(inp){const f=inp.files[0];if(!f)return;scan={st:'load',recs:[],msg:''};R();
+try{const sample=await claude.use('sample');if(!sample)throw{code:'none'};const lim=await sample.limits();if(!lim.images)throw{code:'images_unavailable'};const blob=await shrink(f),p=pet(S.petId);
+const r=await sample.json('Esta é a foto de um cartão de vacinação de um(a) '+p.esp.toLowerCase()+'. Leia as vacinas registradas e responda SOMENTE com um array JSON. Cada item: {"n": nome da vacina, "dose": uma de "1ª dose", "2ª dose", "3ª dose", "Reforço", "Anual" ou "", "d": data de aplicação AAAA-MM-DD, "lote": lote ou "", "vet": veterinário ou "", "prox": data da próxima dose AAAA-MM-DD ou ""}. Use "" quando algo não estiver legível e nunca invente dados. Se a imagem não for um cartão de vacina, responda [].',{images:[blob],modelTier:'default'});
+scan={st:'ok',msg:'',recs:(Array.isArray(r)?r:[]).filter(x=>x&&x.n).map(x=>({n:String(x.n),dose:String(x.dose||''),d:isoD(x.d),lote:String(x.lote||''),vet:String(x.vet||''),prox:isoD(x.prox),on:true}))}}
+catch(e){const c=e&&e.code;scan={st:'err',recs:[],msg:c=='cancelled'?'':c=='rate_limited'?'Muitas tentativas seguidas. Tente de novo em instantes.':c=='image_rejected'?'Não consegui usar essa imagem. Tente outra foto.':['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed','images_unavailable','none'].includes(c)?'A leitura automática não está disponível aqui. Preencha manualmente.':'Não foi possível ler o cartão. Tente uma foto mais nítida ou preencha manualmente.'}}
+inp.value='';R()}
+function scanBox(){const bt=(l,cap)=>`<label class='chip' style='cursor:pointer;position:relative;display:inline-block;margin:0 6px 6px 0'>${l}<input type='file' accept='image/*' ${cap?`capture='environment'`:''} onchange='readCard(this)' style='position:absolute;opacity:0;width:1px;height:1px;margin:0'></label>`;
+let b='';if(scan.st=='load')b=`<p class='mute'>Lendo o cartão… pode levar alguns segundos.</p>`;else if(scan.st=='err'&&scan.msg)b=`<div class='err'>${scan.msg}</div>`;else if(scan.st=='ok')b=scan.recs.length?`<p><b>${scan.recs.length} registro${scan.recs.length>1?'s':''} encontrado${scan.recs.length>1?'s':''}.</b> Confira com o cartão e desmarque o que não quiser.</p>${scan.recs.map((x,i)=>`<label class='ck'><input type='checkbox' ${x.on?'checked':''} onchange='scan.recs[${i}].on=this.checked'><span><b>${h(x.n)}</b> · ${h(x.dose)||'dose não lida'} · ${fd(x.d)}<br><span class='mute'>Lote ${h(x.lote)||'—'} · ${h(x.vet)||'vet. não lido'} · Próxima: ${fd(x.prox)}</span></span></label>`).join('')}<button class='w' onclick='addScan()'>Adicionar selecionadas ao cartão</button><p class='mute'>A leitura pode errar. Os registros entram como "Precisa confirmar".</p>`:`<div class='err'>Não encontrei vacinas nessa foto. Tente uma imagem mais nítida e bem iluminada.</div>`;
+return `<div class='card' style='border-color:var(--acc)'><b>📷 Preencher com foto do cartão</b><p class='mute'>Tire uma foto ou escolha da galeria. Lemos os dados automaticamente e você confere antes de salvar. A foto não fica guardada.</p>${bt('Tirar foto',1)}${bt('Escolher da galeria',0)}${b}</div>`}
+function addScan(){const p=pet(S.petId),hoje=new Date().toISOString().slice(0,10);(p.vac=p.vac||[]);scan.recs.filter(x=>x.on).forEach(x=>{p.vac.push({n:x.n,dose:x.dose,d:x.d,lote:x.lote,vet:x.vet,prox:x.prox,c:0});if(x.prox&&x.prox>=hoje)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+x.n,dt:x.prox+'T10:00',st:'agendado'})});scan={st:'',recs:[],msg:''};S.sheet=null;R()}
+function nav(){const t=[['home','🏠','Início'],['pets','🐕','Pets'],['agenda','📅','Agenda'],['anuncios','📣','Anúncios']],cur=S.view=='perfil'?'pets':S.view;
+return `<nav><div>${t.concat([['lojas','🏪','Comércios'],['dono','👤','Perfil']]).map(([k,i,l])=>`<button class="${cur==k?'on':''}" onclick="go('${k}')"><b>${i}</b>${l}</button>`).join('')}</div></nav>`}
+function R(){const V={auth,home,pets,perfil,agenda,anuncios,dono,lojas};let o='';
+if(S.sheet){const t=S.sheet.t;o=`<div class="ov" onclick="if(event.target==this)sheet(null)"><div class="sh">${{doc:docSheet,pet:petForm,del:delSheet,ev:evForm,ad:adForm,msg:msgSheet,donoF:donoForm,pw:pwForm,acc:accSheet,vac:vacForm,shop:shopForm,shopd:shopDet,famP:famPForm,inv:invForm}[t]()}</div></div>`}
+$('app').innerHTML=V[S.view]()+(S.view!='auth'?nav():'')+o;window.scrollTo(0,0)}
+R();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(reg => console.log("Patinha PWA ativo:", reg.scope))
+      .catch(err => console.error("Falha ao registrar Service Worker:", err));
+  });
+}
+</script>
+</body></html>
