@@ -1,0 +1,8 @@
+PATINHA + SUPABASE
+
+1) Antes de enviar ao GitHub, abra SUPABASE_SQL.sql e execute o conteúdo no SQL Editor do Supabase.
+2) Envie o conteúdo desta pasta ao repositório GitHub, substituindo o index.html anterior.
+3) A integração implementa cadastro/login Supabase e gravação/leitura/edição/exclusão dos pets.
+4) Fotos dos pets, agenda, anúncios, família e perfil ainda não estão sincronizados nesta primeira versão.
+5) O cadastro exige confirmação por e-mail se essa opção estiver habilitada no Supabase.
+6) A chave publishable fica no HTML e é própria para cliente; nunca inclua service_role/secret.

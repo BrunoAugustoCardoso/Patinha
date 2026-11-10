@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Patinha — cuidados do seu pet</title>
+<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#7c3aed"><link rel="icon" href="./icons/icon-192.png"><link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#eef3f2;--card:#fff;--ink:#17302d;--mute:#5d726f;--line:#d6e1de;--acc:#0f766e;--acc-t:#fff;--warn:#fef3c7;--warn-i:#92400e;--ok:#d1fae5;--ok-i:#065f46;--bad:#fee2e2;--bad-i:#991b1b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -41,14 +42,14 @@ button{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff}.chip.on{ba
 .vc small{display:block;color:var(--mute);font-size:12px}.vd{min-width:78px}.vs{display:grid;gap:6px;justify-items:end}.late{color:var(--bad-i)}
 .stamp{border:2px solid var(--ok-i);color:var(--ok-i);border-radius:8px;padding:2px 7px;font-size:11px;font-weight:800;transform:rotate(-5deg);display:inline-block}
 </style>
-
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#7c3aed">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
 </head>
 <body><div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL="https://wbaoicfuejyvjvejphcp.supabase.co";
+const SUPABASE_KEY="sb_publishable_oP9rCB-Fp2QRa5iffkLIBA_Asdf6NeQ";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null;
 const $=id=>document.getElementById(id),h=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const day=n=>{const d=new Date();d.setDate(d.getDate()+n);d.setHours(10,0,0,0);return d.toISOString().slice(0,16)};
 const TIPOS=['Vacina','Consulta','Medicação','Vermífugo','Banho e tosa'],ESP={Cachorro:'🐶',Gato:'🐱',Outro:'🐾'};
@@ -76,21 +77,34 @@ function auth(){const m=S.mode,E=S.err?`<div class="err" role="alert">${h(S.err)
 return `<div style="padding-top:40px"><div style="font-size:44px">🐾</div><h1>Patinha</h1><p class="mute">Saúde e rotina do seu pet em um só lugar.</p>${E}${M}
 <form onsubmit="event.preventDefault();doAuth()">
 ${m=='signup'?`<label for="n">Nome</label><input id="n" autocomplete="name">`:''}
-${m=='signup'?`<label for="cp">CPF</label><input id="cp" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" oninput="maskCpf(this)" autocomplete="off">`:''}${m=='signup'?`<label for="ci">Cidade</label><input id="ci" autocomplete="address-level2" placeholder="Ex.: Belo Horizonte">`:''}<label for="em">E-mail</label><input id="em" type="email" autocomplete="email">
+${m=='signup'?`<label for="ci">Cidade</label><input id="ci" autocomplete="address-level2" placeholder="Ex.: Belo Horizonte">`:''}<label for="em">E-mail</label><input id="em" type="email" autocomplete="email">
 ${m!='forgot'?`<label for="pw">Senha</label><input id="pw" type="password" autocomplete="${m=='login'?'current-password':'new-password'}">`:''}
 ${m=='signup'?`<label class="ck"><input id="tm" type="checkbox"><span>Li e aceito os <button type="button" class="lnk" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button> e a <button type="button" class="lnk" onclick="sheet({t:'doc',k:'Política de privacidade'})">Política de privacidade</button>.</span></label>`:''}
 <button class="w">${m=='login'?'Entrar':m=='signup'?'Criar conta':'Enviar link de recuperação'}</button></form>
 <div class="row sp" style="margin-top:14px">${m=='login'?`<button class="lnk" onclick="go('auth',{mode:'forgot'})">Esqueci a senha</button><button class="lnk" onclick="go('auth',{mode:'signup'})">Criar conta</button>`:`<button class="lnk" onclick="go('auth',{mode:'login'})">Voltar para o login</button>`}</div>
-<p class="mute" style="margin-top:20px">Pedimos só o necessário: nome, CPF, cidade, e-mail e senha. O CPF fica protegido e aparece parcialmente oculto no seu perfil; a cidade mostra comércios e anúncios da sua região.</p></div>`}
+<p class="mute" style="margin-top:20px">Pedimos nome, cidade, e-mail e senha para criar sua conta. A cidade pode ajudar a organizar serviços e anúncios da sua região.</p></div>`}
 function maskCpf(i){const d=i.value.replace(/\D/g,'').slice(0,11);i.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
 function cpfOk(c){const d=c.replace(/\D/g,'');if(d.length!=11||/^(\d)\1+$/.test(d))return false;for(const n of[9,10]){let s=0;for(let i=0;i<n;i++)s+=d[i]*(n+1-i);if((s*10%11)%10!=d[n])return false}return true}
-function doAuth(){const m=S.mode,em=$('em').value.trim();
+async function doAuth(){const m=S.mode,em=$('em').value.trim();
 if(!/^\S+@\S+\.\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
 if(m=='forgot')return S.err='',S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.',R();
 const pw=$('pw').value;if(pw.length<8)return S.err='A senha precisa ter ao menos 8 caracteres.',R();
-let nome=em.split('@')[0],cid='',cpf='';
-if(m=='signup'){nome=$('n').value.trim();if(!nome)return S.err='Informe seu nome.',R();cid=$('ci').value.trim();if(!cid)return S.err='Informe sua cidade.',R();cpf=$('cp').value;if(!cpfOk(cpf))return S.err='Informe um CPF válido.',R();if(!$('tm').checked)return S.err='Para criar a conta, aceite os termos e a política de privacidade.',R()}
-S.user={nome,email:em,tel:'',cidade:cid,cpf,foto:'',msgs:true};seed();go('home')}
+let nome=em.split('@')[0],cid='';
+if(m=='signup'){nome=$('n').value.trim();if(!nome)return S.err='Informe seu nome.',R();cid=$('ci').value.trim();if(!cid)return S.err='Informe sua cidade.',R();if(!$('tm').checked)return S.err='Para criar a conta, aceite os termos e a política de privacidade.',R()}
+try{if(m=='signup'){const {data,error}=await db.auth.signUp({email:em,password:pw,options:{data:{nome,cidade:cid}}});if(error)throw error;if(!data.session){S.msg='Conta criada! Confira seu e-mail para confirmar o cadastro e depois entre no Patinha.';return R()}currentUser=data.user;}else{const {data,error}=await db.auth.signInWithPassword({email:em,password:pw});if(error)throw error;currentUser=data.user;}await openUserData();}catch(e){S.err=e.message||'Não foi possível entrar. Confira seus dados.';R()}}
+async function openUserData(){
+ const {data:{user},error}=await db.auth.getUser(); if(error)throw error; currentUser=user;
+ const meta=user.user_metadata||{}; S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:'',cidade:meta.cidade||'',foto:'',msgs:true};
+ const {data,error:readError}=await db.from('pets').select('local_id,app_data').eq('user_id',user.id); if(readError)throw readError;
+ S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id})); S.events=[]; S.fam=[]; S.view='home'; S.mode='login'; S.err=''; S.msg=''; R();
+}
+async function persistPet(p){if(!currentUser)throw new Error('Entre na sua conta para salvar os pets.');
+ const copy={...p}; delete copy.foto;
+ const row={user_id:currentUser.id,local_id:String(p.id),nome:p.nome,especie:p.esp||'Outro',raca:p.raca||null,sexo:p.sexo||null,data_nascimento:p.nasc||null,peso:p.peso?Number(String(p.peso).replace(',','.')):null,observacoes:null,app_data:copy};
+ const {error}=await db.from('pets').upsert(row,{onConflict:'user_id,local_id'}); if(error)throw error;
+}
+async function persistCurrentPet(){try{const p=pet(S.petId);if(p)await persistPet(p)}catch(e){S.err='Alteração feita na tela, mas não foi sincronizada: '+(e.message||'erro');R()}}
+async function boot(){try{const {data:{session}}=await db.auth.getSession();if(session){await openUserData();return}}catch(e){console.error(e)}R()}
 function docSheet(){const k=S.sheet.k;return `<h2>${k}</h2><p class="mute">Texto de exemplo do protótipo. Aqui entra o documento completo, incluindo quais dados são coletados, para quê e como excluí-los.</p><button class="w" onclick="sheet(null)">Fechar</button>`}
 
 /* Tela 2 */
@@ -113,11 +127,12 @@ function petForm(){const p=S.sheet.id?pet(S.sheet.id):{};return `<h2>${p.id?'Edi
 <label for="pd">Nascimento (opcional)</label><input id="pd" type="date" value="${h(p.nasc)}">
 <label for="pp">Peso em kg (opcional)</label><input id="pp" inputmode="decimal" value="${h(p.peso)}">
 <button class="w">Salvar</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
-function savePet(id){const n=$('pn').value.trim();if(!n)return S.err='Informe o nome do pet.',R();
+async function savePet(id){const n=$('pn').value.trim();if(!n)return S.err='Informe o nome do pet.',R();
 const d={foto:tmpFoto,nome:n,esp:$('pe').value,raca:$('pr').value.trim(),nasc:$('pd').value,peso:$('pp').value.trim()};
-if(id)Object.assign(pet(id),d);else S.pets.push({id:uid(),ativo:1,alergias:[],doencas:[],cuidados:[],hist:[],...d});S.sheet=null;tmpFoto='';R()}
+let p;if(id){p=pet(id);Object.assign(p,d)}else{p={id:uid(),ativo:1,alergias:[],doencas:[],cuidados:[],hist:[],vac:[],...d};S.pets.push(p)}
+try{await persistPet(p);S.sheet=null;tmpFoto='';S.msg='Pet salvo no banco de dados!';R()}catch(e){S.err='Não foi possível salvar no Supabase: '+(e.message||'verifique a tabela e as políticas RLS');R()}}
 function delSheet(){const p=pet(S.sheet.id);return `<h2>Excluir ${h(p.nome)}?</h2><p class="mute">Todos os registros de saúde e eventos deste pet serão apagados. Não dá para desfazer. Se preferir, desative o cadastro.</p><button class="w d" onclick="delPet('${p.id}')">Excluir definitivamente</button><button class="w g" onclick="sheet(null)">Cancelar</button>`}
-function delPet(id){S.pets=S.pets.filter(p=>p.id!=id);S.events=S.events.filter(e=>e.pet!=id);go('pets')}
+async function delPet(id){try{const {error}=await db.from('pets').delete().eq('user_id',currentUser.id).eq('local_id',String(id));if(error)throw error;S.pets=S.pets.filter(p=>p.id!=id);S.events=S.events.filter(e=>e.pet!=id);go('pets')}catch(e){S.err='Não foi possível excluir: '+e.message;R()}}
 
 /* Tela 4 */
 const TABS=[['geral','Geral'],['vac','Vacinas'],['alergias','Alergias'],['doencas','Doenças'],['cuidados','Cuidados'],['hist','Histórico']];
@@ -133,9 +148,9 @@ ${p[t].length?p[t].map((r,i)=>`<div class="card row sp"><div class="grow">${h(r.
 <form class="row" onsubmit="event.preventDefault();addRec('${t}')"><input id="nr" style="margin:0" placeholder="Novo registro" aria-label="Novo registro"><button class="sm">Adicionar</button></form>`;
 return `<button class="g" onclick="go('pets')">‹ Meus pets</button>${p.foto?`<img class="big" src="${p.foto}" alt="Foto de ${h(p.nome)}">`:''}<h1>${ESP[p.esp]} ${h(p.nome)} ${p.ativo?'':'<span class="tag c">Desativado</span>'}</h1>
 <div class="chips" role="tablist">${TABS.map(([k,l])=>`<button role="tab" class="chip ${t==k?'on':''}" onclick="S.tab='${k}';R()">${l}</button>`).join('')}</div>${body}`}
-const p_toggle=id=>{const p=pet(id);p.ativo=p.ativo?0:1;R()};
-const conf=(t,i)=>{pet(S.petId)[t][i].c=1;R()},rm=(t,i)=>{pet(S.petId)[t].splice(i,1);R()};
-function addRec(t){const v=$('nr').value.trim();if(!v)return;pet(S.petId)[t].push({t:v,c:0});R()}
+const p_toggle=id=>{const p=pet(id);p.ativo=p.ativo?0:1;persistPet(p).catch(e=>{S.err='Falha ao sincronizar: '+e.message;R()});R()};
+const conf=(t,i)=>{pet(S.petId)[t][i].c=1;persistCurrentPet();R()},rm=(t,i)=>{pet(S.petId)[t].splice(i,1);persistCurrentPet();R()};
+function addRec(t){const v=$('nr').value.trim();if(!v)return;pet(S.petId)[t].push({t:v,c:0});persistCurrentPet();R()}
 
 /* Tela 5 */
 function agenda(){const ps=S.pets.filter(p=>p.ativo);let ev=S.events.slice().sort((a,b)=>a.dt.localeCompare(b.dt)).filter(e=>(!S.fPet||e.pet==S.fPet)&&(!S.fTipo||e.tipo==S.fTipo));
@@ -188,7 +203,7 @@ function vacCard(p){const hoje=new Date().toISOString().slice(0,10),v=(p.vac=p.v
 return `<div class='vc'><div class='vh'><span>💉 Cartão de vacinação</span><span>${ESP[p.esp]}</span></div><div class='vi'><div><small>Nome</small><b>${h(p.nome)}</b></div><div><small>Espécie</small><b>${p.esp}</b></div><div><small>Raça</small><b>${h(p.raca)||'—'}</b></div><div><small>Nascimento</small><b>${fd(p.nasc)}</b></div></div>${v.length?v.map(x=>{const at=x.prox&&x.prox<hoje;return `<div class='vr'><div class='vd'><b>${fd(x.d)}</b><small>${h(x.dose)}</small></div><div class='grow'><b>${h(x.n)}</b><small>Lote ${h(x.lote)||'—'} · ${h(x.vet)||'Vet. não informado'}</small>${x.prox?`<small>Próxima dose: <b class='${at?'late':''}'>${fd(x.prox)}</b>${at?' (atrasada)':''}</small>`:''}</div><div class='vs'>${x.c?`<span class='stamp'>Confirmado</span>`:`<button class='sm' onclick='cv(${x.i})'>Confirmar</button>`}<button class='sm g' onclick='rv(${x.i})'>Remover</button></div></div>`}).join(''):`<div class='empty'>Nenhuma vacina registrada.</div>`}</div><button class='w' style='margin-top:12px' onclick='openVac()'>+ Registrar vacina</button><p class='mute'>Informe a data da próxima dose para criar um lembrete na Agenda.</p>`}
 function vacForm(){const p=pet(S.petId),L=p.esp=='Gato'?['V3 (tríplice felina)','V4 (quádrupla felina)','V5 (quíntupla felina)','Antirrábica','FeLV']:['V8 (óctupla)','V10 (déctupla)','Antirrábica','Gripe canina','Giárdia','Leishmaniose'];
 return `<h2>Registrar vacina</h2>${scanBox()}<p class='mute' style='margin-top:14px'>Ou preencha manualmente:</p>${S.err?`<div class='err'>${S.err}</div>`:''}<form onsubmit='event.preventDefault();saveVac()'><label for='vn'>Vacina</label><input id='vn' list='vl' placeholder='Escolha ou digite'><datalist id='vl'>${L.map(x=>`<option value='${x}'>`).join('')}</datalist><label for='vo'>Dose</label><select id='vo'>${['1ª dose','2ª dose','3ª dose','Reforço','Anual'].map(x=>`<option>${x}</option>`).join('')}</select><label for='vd'>Data de aplicação</label><input id='vd' type='date' value='${new Date().toISOString().slice(0,10)}'><label for='vt'>Lote (opcional)</label><input id='vt'><label for='vv'>Veterinário (opcional)</label><input id='vv'><label for='vp'>Próxima dose (opcional)</label><input id='vp' type='date'><button class='w'>Salvar no cartão</button></form><button class='w g' onclick='sheet(null)'>Cancelar</button>`}
-function saveVac(){const n=$('vn').value.trim(),d=$('vd').value,x=$('vp').value;if(!n||!d)return S.err='Informe a vacina e a data de aplicação.',R();const p=pet(S.petId);(p.vac=p.vac||[]).push({n,dose:$('vo').value,d,lote:$('vt').value.trim(),vet:$('vv').value.trim(),prox:x,c:0});if(x)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+n,dt:x+'T10:00',st:'agendado'});S.sheet=null;R()}
+function saveVac(){const n=$('vn').value.trim(),d=$('vd').value,x=$('vp').value;if(!n||!d)return S.err='Informe a vacina e a data de aplicação.',R();const p=pet(S.petId);(p.vac=p.vac||[]).push({n,dose:$('vo').value,d,lote:$('vt').value.trim(),vet:$('vv').value.trim(),prox:x,c:0});if(x)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+n,dt:x+'T10:00',st:'agendado'});S.sheet=null;persistPet(p).catch(e=>{S.err='Falha ao sincronizar: '+e.message;R()});R()}
 const CATS=['Pet shop','Casa de ração','Veterinário','Banho e tosa','Hotel e creche','Farmácia vet.'],CI={'Pet shop':'🛍️','Casa de ração':'🌾','Veterinário':'🩺','Banho e tosa':'🛁','Hotel e creche':'🏨','Farmácia vet.':'💊'};
 const SH=[{n:'Pet Shop Cantinho Feliz',c:'Pet shop',b:'Centro',h:'Seg a sáb, 8h às 18h',s:'Acessórios, brinquedos, petiscos e roupinhas',fav:0},{n:'Casa de Ração Boa Safra',c:'Casa de ração',b:'Zona norte',h:'Seg a sáb, 7h às 18h',s:'Rações a granel e embaladas, areia higiênica, entrega local',fav:0},{n:'Clínica Veterinária Vida Animal',c:'Veterinário',b:'Centro',h:'Plantão 24 horas',s:'Consultas, vacinas, exames e cirurgias',u:1,fav:0},{n:'Pelo Macio Banho e Tosa',c:'Banho e tosa',b:'Zona sul',h:'Ter a sáb, 9h às 17h',s:'Banho, tosa higiênica e hidratação, com leva e traz',fav:0},{n:'Hotelzinho Patas Felizes',c:'Hotel e creche',b:'Bairro Jardim',h:'Todos os dias, 7h às 19h',s:'Hospedagem e creche diária',fav:0},{n:'Vet Saúde Farmácia',c:'Farmácia vet.',b:'Centro',h:'Seg a sex, 8h às 18h',s:'Medicamentos, antiparasitários e suplementos',fav:0}];
 let sF=0;const setF=j=>{sF=j;R()},fav=i=>{SH[i].fav=SH[i].fav?0:1;R()},det=i=>sheet({t:'shopd',i});
@@ -216,21 +231,12 @@ inp.value='';R()}
 function scanBox(){const bt=(l,cap)=>`<label class='chip' style='cursor:pointer;position:relative;display:inline-block;margin:0 6px 6px 0'>${l}<input type='file' accept='image/*' ${cap?`capture='environment'`:''} onchange='readCard(this)' style='position:absolute;opacity:0;width:1px;height:1px;margin:0'></label>`;
 let b='';if(scan.st=='load')b=`<p class='mute'>Lendo o cartão… pode levar alguns segundos.</p>`;else if(scan.st=='err'&&scan.msg)b=`<div class='err'>${scan.msg}</div>`;else if(scan.st=='ok')b=scan.recs.length?`<p><b>${scan.recs.length} registro${scan.recs.length>1?'s':''} encontrado${scan.recs.length>1?'s':''}.</b> Confira com o cartão e desmarque o que não quiser.</p>${scan.recs.map((x,i)=>`<label class='ck'><input type='checkbox' ${x.on?'checked':''} onchange='scan.recs[${i}].on=this.checked'><span><b>${h(x.n)}</b> · ${h(x.dose)||'dose não lida'} · ${fd(x.d)}<br><span class='mute'>Lote ${h(x.lote)||'—'} · ${h(x.vet)||'vet. não lido'} · Próxima: ${fd(x.prox)}</span></span></label>`).join('')}<button class='w' onclick='addScan()'>Adicionar selecionadas ao cartão</button><p class='mute'>A leitura pode errar. Os registros entram como "Precisa confirmar".</p>`:`<div class='err'>Não encontrei vacinas nessa foto. Tente uma imagem mais nítida e bem iluminada.</div>`;
 return `<div class='card' style='border-color:var(--acc)'><b>📷 Preencher com foto do cartão</b><p class='mute'>Tire uma foto ou escolha da galeria. Lemos os dados automaticamente e você confere antes de salvar. A foto não fica guardada.</p>${bt('Tirar foto',1)}${bt('Escolher da galeria',0)}${b}</div>`}
-function addScan(){const p=pet(S.petId),hoje=new Date().toISOString().slice(0,10);(p.vac=p.vac||[]);scan.recs.filter(x=>x.on).forEach(x=>{p.vac.push({n:x.n,dose:x.dose,d:x.d,lote:x.lote,vet:x.vet,prox:x.prox,c:0});if(x.prox&&x.prox>=hoje)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+x.n,dt:x.prox+'T10:00',st:'agendado'})});scan={st:'',recs:[],msg:''};S.sheet=null;R()}
+function addScan(){const p=pet(S.petId),hoje=new Date().toISOString().slice(0,10);(p.vac=p.vac||[]);scan.recs.filter(x=>x.on).forEach(x=>{p.vac.push({n:x.n,dose:x.dose,d:x.d,lote:x.lote,vet:x.vet,prox:x.prox,c:0});if(x.prox&&x.prox>=hoje)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+x.n,dt:x.prox+'T10:00',st:'agendado'})});scan={st:'',recs:[],msg:''};S.sheet=null;persistPet(p).catch(e=>{S.err='Falha ao sincronizar: '+e.message;R()});R()}
 function nav(){const t=[['home','🏠','Início'],['pets','🐕','Pets'],['agenda','📅','Agenda'],['anuncios','📣','Anúncios']],cur=S.view=='perfil'?'pets':S.view;
 return `<nav><div>${t.concat([['lojas','🏪','Comércios'],['dono','👤','Perfil']]).map(([k,i,l])=>`<button class="${cur==k?'on':''}" onclick="go('${k}')"><b>${i}</b>${l}</button>`).join('')}</div></nav>`}
 function R(){const V={auth,home,pets,perfil,agenda,anuncios,dono,lojas};let o='';
 if(S.sheet){const t=S.sheet.t;o=`<div class="ov" onclick="if(event.target==this)sheet(null)"><div class="sh">${{doc:docSheet,pet:petForm,del:delSheet,ev:evForm,ad:adForm,msg:msgSheet,donoF:donoForm,pw:pwForm,acc:accSheet,vac:vacForm,shop:shopForm,shopd:shopDet,famP:famPForm,inv:invForm}[t]()}</div></div>`}
 $('app').innerHTML=V[S.view]()+(S.view!='auth'?nav():'')+o;window.scrollTo(0,0)}
-R();
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
-      .then(reg => console.log("Patinha PWA ativo:", reg.scope))
-      .catch(err => console.error("Falha ao registrar Service Worker:", err));
-  });
-}
-</script>
-</body></html>
+boot();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));}
+</script></body></html>
