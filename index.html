@@ -96,12 +96,17 @@ async function openUserData(){
  const {data:{user},error}=await db.auth.getUser(); if(error)throw error; currentUser=user;
  const meta=user.user_metadata||{}; S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:'',cidade:meta.cidade||'',foto:'',msgs:true};
  const {data,error:readError}=await db.from('pets').select('local_id,app_data').eq('user_id',user.id); if(readError)throw readError;
- S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id})); S.events=[]; S.fam=[]; S.view='home'; S.mode='login'; S.err=''; S.msg=''; R();
+ S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id})); await Promise.all(S.pets.map(async p=>{if(p.fotoPath){try{p.foto=await signedPetPhoto(p.fotoPath)}catch(e){console.warn('Foto não carregada:',e.message)}}})); S.events=[]; S.fam=[]; S.view='home'; S.mode='login'; S.err=''; S.msg=''; R();
 }
+async function signedPetPhoto(path){const {data,error}=await db.storage.from('fotos-pets').createSignedUrl(path,3600);if(error)throw error;return data.signedUrl}
+async function uploadPetPhoto(dataUrl,p){const blob=await (await fetch(dataUrl)).blob();const path=currentUser.id+'/'+String(p.id)+'.jpg';const {error}=await db.storage.from('fotos-pets').upload(path,blob,{contentType:'image/jpeg',upsert:true,cacheControl:'3600'});if(error)throw error;return path}
 async function persistPet(p){if(!currentUser)throw new Error('Entre na sua conta para salvar os pets.');
- const copy={...p}; delete copy.foto;
+ const copy={...p};let path=copy.fotoPath||null;
+ if(copy.foto&&copy.foto.startsWith('data:image/'))path=await uploadPetPhoto(copy.foto,p);else if(!copy.foto)path=null;
+ copy.fotoPath=path;delete copy.foto;
  const row={user_id:currentUser.id,local_id:String(p.id),nome:p.nome,especie:p.esp||'Outro',raca:p.raca||null,sexo:p.sexo||null,data_nascimento:p.nasc||null,peso:p.peso?Number(String(p.peso).replace(',','.')):null,observacoes:null,app_data:copy};
- const {error}=await db.from('pets').upsert(row,{onConflict:'user_id,local_id'}); if(error)throw error;
+ const {error}=await db.from('pets').upsert(row,{onConflict:'user_id,local_id'});if(error)throw error;
+ p.fotoPath=path;p.foto=path?await signedPetPhoto(path):'';
 }
 async function persistCurrentPet(){try{const p=pet(S.petId);if(p)await persistPet(p)}catch(e){S.err='Alteração feita na tela, mas não foi sincronizada: '+(e.message||'erro');R()}}
 async function boot(){try{const {data:{session}}=await db.auth.getSession();if(session){await openUserData();return}}catch(e){console.error(e)}R()}
@@ -128,8 +133,8 @@ function petForm(){const p=S.sheet.id?pet(S.sheet.id):{};return `<h2>${p.id?'Edi
 <label for="pp">Peso em kg (opcional)</label><input id="pp" inputmode="decimal" value="${h(p.peso)}">
 <button class="w">Salvar</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
 async function savePet(id){const n=$('pn').value.trim();if(!n)return S.err='Informe o nome do pet.',R();
-const d={foto:tmpFoto,nome:n,esp:$('pe').value,raca:$('pr').value.trim(),nasc:$('pd').value,peso:$('pp').value.trim()};
-let p;if(id){p=pet(id);Object.assign(p,d)}else{p={id:uid(),ativo:1,alergias:[],doencas:[],cuidados:[],hist:[],vac:[],...d};S.pets.push(p)}
+let p=id?pet(id):null;const d={foto:tmpFoto,fotoPath:tmpFoto?(p?.fotoPath||null):null,nome:n,esp:$('pe').value,raca:$('pr').value.trim(),nasc:$('pd').value,peso:$('pp').value.trim()};
+if(p){Object.assign(p,d)}else{p={id:uid(),ativo:1,alergias:[],doencas:[],cuidados:[],hist:[],vac:[],...d};S.pets.push(p)}
 try{await persistPet(p);S.sheet=null;tmpFoto='';S.msg='Pet salvo no banco de dados!';R()}catch(e){S.err='Não foi possível salvar no Supabase: '+(e.message||'verifique a tabela e as políticas RLS');R()}}
 function delSheet(){const p=pet(S.sheet.id);return `<h2>Excluir ${h(p.nome)}?</h2><p class="mute">Todos os registros de saúde e eventos deste pet serão apagados. Não dá para desfazer. Se preferir, desative o cadastro.</p><button class="w d" onclick="delPet('${p.id}')">Excluir definitivamente</button><button class="w g" onclick="sheet(null)">Cancelar</button>`}
 async function delPet(id){try{const {error}=await db.from('pets').delete().eq('user_id',currentUser.id).eq('local_id',String(id));if(error)throw error;S.pets=S.pets.filter(p=>p.id!=id);S.events=S.events.filter(e=>e.pet!=id);go('pets')}catch(e){S.err='Não foi possível excluir: '+e.message;R()}}
