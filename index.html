@@ -96,7 +96,7 @@ async function openUserData(){
  const {data:{user},error}=await db.auth.getUser(); if(error)throw error; currentUser=user;
  const meta=user.user_metadata||{}; S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:'',cidade:meta.cidade||'',foto:'',msgs:true};
  const {data,error:readError}=await db.from('pets').select('local_id,app_data').eq('user_id',user.id); if(readError)throw readError;
- S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id})); await Promise.all(S.pets.map(async p=>{if(p.fotoPath){try{p.foto=await signedPetPhoto(p.fotoPath)}catch(e){console.warn('Foto não carregada:',e.message)}}})); S.events=S.pets.flatMap(p=>p.eventos||[]); S.fam=[]; S.view='home'; S.mode='login'; S.err=''; S.msg=''; R();
+ S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id})); await Promise.all(S.pets.map(async p=>{if(p.fotoPath){try{p.foto=await signedPetPhoto(p.fotoPath)}catch(e){console.warn('Foto não carregada:',e.message)}}})); S.events=S.pets.flatMap(p=>p.eventos||[]); S.fam=[]; S.view='home'; S.mode='login'; S.err=''; S.msg=''; R(); checkUpcomingReminders();
 }
 async function signedPetPhoto(path){const {data,error}=await db.storage.from('fotos-pets').createSignedUrl(path,3600);if(error)throw error;return data.signedUrl}
 async function uploadPetPhoto(dataUrl,p){const blob=await (await fetch(dataUrl)).blob();const path=currentUser.id+'/'+String(p.id)+'.jpg';const {error}=await db.storage.from('fotos-pets').upload(path,blob,{contentType:'image/jpeg',upsert:true,cacheControl:'3600'});if(error)throw error;return path}
@@ -109,6 +109,32 @@ async function persistPet(p){if(!currentUser)throw new Error('Entre na sua conta
  p.fotoPath=path;p.foto=path?await signedPetPhoto(path):'';
 }
 async function persistCurrentPet(){try{const p=pet(S.petId);if(p)await persistPet(p)}catch(e){S.err='Alteração feita na tela, mas não foi sincronizada: '+(e.message||'erro');R()}}
+// Lembretes do navegador: são verificados enquanto o Patinha está aberto.
+function reminderStorageKey(){return 'patinha_notified_'+(currentUser?.id||'guest')}
+async function checkUpcomingReminders(){
+ if(!currentUser||!('Notification' in window)||Notification.permission!=='granted')return;
+ const now=Date.now(),limit=now+24*60*60*1000,key=reminderStorageKey();
+ let sent=[];try{sent=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){}
+ for(const e of S.events){
+  if(e.st!=='agendado')continue;
+  const when=new Date(e.dt).getTime();
+  if(!Number.isFinite(when)||when<now||when>limit||sent.includes(String(e.id)))continue;
+  const p=pet(e.pet),petName=p?.nome||'seu pet';
+  const title='Lembrete do Patinha 🐾';
+  const body=petName+' — '+e.tit+' ('+new Date(e.dt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+').';
+  try{
+   if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.ready;await reg.showNotification(title,{body,tag:'patinha-'+e.id,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png'});}
+   else new Notification(title,{body});
+   sent.push(String(e.id));
+  }catch(err){console.warn('Não foi possível exibir o lembrete:',err)}
+ }
+ try{localStorage.setItem(key,JSON.stringify(sent.slice(-300)))}catch(e){}
+}
+async function enableReminders(){
+ if(!('Notification' in window)){S.err='Este navegador não oferece suporte a notificações.';R();return}
+ try{const permission=await Notification.requestPermission();if(permission==='granted'){S.msg='Notificações ativadas! O Patinha avisará sobre eventos nas próximas 24 horas enquanto estiver aberto.';S.err='';await checkUpcomingReminders()}else{S.err='A permissão foi negada. Altere nas configurações do navegador para ativar.';S.msg=''} }catch(e){S.err='Não foi possível ativar as notificações neste navegador.';S.msg=''}
+ R();
+}
 async function boot(){try{const {data:{session}}=await db.auth.getSession();if(session){await openUserData();return}}catch(e){console.error(e)}R()}
 function docSheet(){const k=S.sheet.k;return `<h2>${k}</h2><p class="mute">Texto de exemplo do protótipo. Aqui entra o documento completo, incluindo quais dados são coletados, para quê e como excluí-los.</p><button class="w" onclick="sheet(null)">Fechar</button>`}
 
@@ -193,7 +219,7 @@ return `<h1>Meu perfil</h1>${S.msg?`<div class="msg">${h(S.msg)}</div>`:''}
 <div class="card row"><div class="av" style="width:64px;height:64px;font-size:28px;font-weight:800">${u.foto?`<img src="${u.foto}" alt="Sua foto">`:h(ini(u))}</div><div class="grow"><b>${h(u.nome)}</b><div class="mute">${h(u.email)}</div></div></div>
 <h2>Dados da conta</h2><div class="card">${k('Nome',u.nome)}${k('E-mail',u.email)}${k('CPF',u.cpf?'•••.'+u.cpf.slice(4,11)+'-••':'','Não informado')}${k('Telefone (opcional)',u.tel,'Não informado')}${k('Cidade ou região (opcional)',u.cidade,'Não informada')}<div style="margin-top:12px"><button class="sm s" onclick="sheet({t:'donoF'})">Editar dados</button></div></div>
 <h2>Resumo</h2><div class="card row sp"><div><b>${ps}</b><div class="mute">pets ativos</div></div><div><b>${ev}</b><div class="mute">eventos agendados</div></div><div><b>${S.ads.filter(a=>a.mine).length}</b><div class="mute">anúncios seus</div></div></div>
-${famSec()}<h2>Privacidade</h2><div class="card"><label class="ck"><input type="checkbox" ${u.msgs!==false?'checked':''} onchange="S.user.msgs=this.checked"><span>Permitir mensagens de outras pessoas pelos meus anúncios</span></label><div class="mute">Seu e-mail, telefone e senha nunca aparecem para outros usuários. Os anúncios mostram só o animal e a região.</div></div>
+${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos de cuidados</b><p class="mute">Receba avisos do navegador sobre vacinas, medicamentos, consultas e outros eventos agendados para as próximas 24 horas. Para esta primeira versão, o Patinha precisa estar aberto.</p><button class="w" onclick="enableReminders()">Ativar notificações</button><p class="mute" style="margin:8px 0 0">Você pode alterar a permissão nas configurações do navegador a qualquer momento.</p></div><h2>Privacidade</h2><div class="card"><label class="ck"><input type="checkbox" ${u.msgs!==false?'checked':''} onchange="S.user.msgs=this.checked"><span>Permitir mensagens de outras pessoas pelos meus anúncios</span></label><div class="mute">Seu e-mail, telefone e senha nunca aparecem para outros usuários. Os anúncios mostram só o animal e a região.</div></div>
 <h2>Segurança</h2><button class="s w" onclick="sheet({t:'pw'})">Alterar senha</button>
 <h2>Sua conta</h2><div class="row" style="margin-bottom:10px"><button class="sm s grow" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button><button class="sm s grow" onclick="sheet({t:'doc',k:'Política de privacidade'})">Privacidade</button></div>
 <button class="s w" style="margin-bottom:10px" onclick="S.user=null;S.mode='login';go('auth')">Sair</button><button class="d w" onclick="sheet({t:'acc'})">Excluir minha conta</button>`}
@@ -243,5 +269,7 @@ function R(){const V={auth,home,pets,perfil,agenda,anuncios,dono,lojas};let o=''
 if(S.sheet){const t=S.sheet.t;o=`<div class="ov" onclick="if(event.target==this)sheet(null)"><div class="sh">${{doc:docSheet,pet:petForm,del:delSheet,ev:evForm,ad:adForm,msg:msgSheet,donoF:donoForm,pw:pwForm,acc:accSheet,vac:vacForm,shop:shopForm,shopd:shopDet,famP:famPForm,inv:invForm}[t]()}</div></div>`}
 $('app').innerHTML=V[S.view]()+(S.view!='auth'?nav():'')+o;window.scrollTo(0,0)}
 boot();
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.error));}
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").then(()=>checkUpcomingReminders()).catch(console.error));}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpcomingReminders()});
+setInterval(checkUpcomingReminders,15*60*1000);
 </script></body></html>
