@@ -120,7 +120,7 @@ return `<h1>Olá, ${h(S.user.nome)}</h1>
 <div class="row"><button class="grow" onclick="sheet({t:'pet'})">+ Adicionar pet</button><button class="grow s" onclick="sheet({t:'ev'})">Agendar cuidado</button></div>
 <h2>Meus pets</h2>${ps.length?`<div class="chips">${ps.map(p=>`<button class="chip" onclick="go('perfil',{petId:'${p.id}',tab:'geral'})">${ESP[p.esp]} ${h(p.nome)}</button>`).join('')}</div>`:'<div class="empty">Nenhum pet ativo. Adicione o primeiro.</div>'}
 <h2>Próximos eventos</h2>${pr.length?pr.map(e=>evCard(e)).join(''):'<div class="empty">Nada agendado.</div>'}`}
-function setEv(id,st){const e=S.events.find(e=>e.id==id);if(!e)return;e.st=st;const p=pet(e.pet);if(p)persistPet(p).catch(err=>{S.err='Evento atualizado na tela, mas não sincronizado: '+err.message;R()});R()}
+async function setEv(id,st){const e=S.events.find(e=>e.id==id);if(!e)return;const old=e.st;e.st=st;const p=pet(e.pet);try{if(p)await persistPet(p);S.msg='Status do evento salvo!';R()}catch(err){e.st=old;S.err='Não foi possível salvar o status: '+err.message;R()}}
 
 /* Tela 3 */
 function pets(){return `<div class="row sp"><h1>Meus pets</h1><button class="sm" onclick="sheet({t:'pet'})">+ Adicionar pet</button></div>
@@ -170,8 +170,8 @@ return `<h2>Agendar cuidado</h2>${S.err?`<div class="err">${S.err}</div>`:''}<fo
 <label for="et">Tipo de cuidado</label><select id="et">${TIPOS.map(t=>`<option>${t}</option>`).join('')}</select>
 <label for="ei">Descrição</label><input id="ei" placeholder="Ex.: reforço da vacina">
 <label for="ed">Data e hora</label><input id="ed" type="datetime-local" value="${day(1)}"><button class="w">Salvar evento</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
-function saveEv(){const t=$('ei').value.trim()||$('et').value,d=$('ed').value;if(!d)return S.err='Informe a data e a hora.',R();
-const e={id:uid(),pet:$('ep').value,tipo:$('et').value,tit:t,dt:d,st:'agendado'};S.events.push(e);const p=pet(e.pet);S.sheet=null;if(p)persistPet(p).then(()=>{S.msg='Evento salvo no calendário!';R()}).catch(err=>{S.err='Não foi possível sincronizar o evento: '+err.message;R()});R()}
+async function saveEv(){const t=$('ei').value.trim()||$('et').value,d=$('ed').value;if(!d)return S.err='Informe a data e a hora.',R();
+const e={id:uid(),pet:$('ep').value,tipo:$('et').value,tit:t,dt:d,st:'agendado'};const p=pet(e.pet);if(!p)return S.err='Pet não encontrado. Tente novamente.',R();S.err='';S.events.push(e);try{await persistPet(p);S.sheet=null;S.msg='Evento salvo no calendário!';R()}catch(err){S.events=S.events.filter(x=>x.id!==e.id);S.err='Não foi possível salvar o evento: '+err.message;R()}}
 
 /* Tela 6 */
 function anuncios(){const l=S.ads.filter(a=>!S.aTipo||a.tipo==S.aTipo);
