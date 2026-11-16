@@ -289,7 +289,25 @@ async function savePw(){
   R();
  }
 }
-const accSheet=()=>`<h2>Excluir sua conta?</h2><p class="mute">Apagamos seus dados, seus pets, os eventos e os anúncios que você publicou. Não dá para desfazer.</p><button class="w d" onclick="S.user=null;S.pets=[];S.events=[];S.ads=S.ads.filter(a=>!a.mine);S.mode='login';go('auth',{msg:'Sua conta e seus dados foram excluídos.'})">Excluir conta e dados</button><button class="w g" onclick="sheet(null)">Cancelar</button>`;
+const accSheet=()=>`<h2>Excluir sua conta?</h2><p class="mute">Esta ação é permanente. Serão removidos seus pets, eventos, fotos e sua conta de acesso. Para confirmar, informe sua senha atual e digite EXCLUIR.</p>${S.err?`<div class="err" role="alert">${h(S.err)}</div>`:''}<form onsubmit="event.preventDefault();deleteAccount()"><label for="delpw">Senha atual</label><input id="delpw" type="password" autocomplete="current-password" required><label for="delconfirm">Digite EXCLUIR</label><input id="delconfirm" autocomplete="off" required><button class="w d" type="submit">Excluir permanentemente</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`;
+async function deleteAccount(){
+ const pw=$('delpw')?.value||'',confirmText=$('delconfirm')?.value||'';
+ if(!pw)return S.err='Informe sua senha atual para confirmar.',R();
+ if(confirmText.trim()!=='EXCLUIR')return S.err='Digite EXCLUIR exatamente como solicitado.',R();
+ if(!currentUser?.email)return S.err='Sua sessão expirou. Entre novamente e tente outra vez.',R();
+ const btn=document.querySelector('.sh form button[type="submit"]');if(btn){btn.disabled=true;btn.textContent='Excluindo…'}
+ try{
+  const {error:reauthError}=await db.auth.signInWithPassword({email:currentUser.email,password:pw});
+  if(reauthError)throw new Error('A senha atual está incorreta.');
+  const {error:functionError}=await db.functions.invoke('delete-account',{method:'POST'});
+  if(functionError)throw functionError;
+  try{await db.auth.signOut()}catch(_){}
+  currentUser=null;S.user=null;S.pets=[];S.events=[];S.fam=[];S.sheet=null;S.view='auth';S.mode='login';S.err='';S.msg='Sua conta e seus dados foram excluídos permanentemente.';R();
+ }catch(e){
+  S.err=e.message==='A senha atual está incorreta.'?e.message:(e.message||'Não foi possível excluir a conta. Tente novamente.');
+  R();
+ }
+}
 const fd=d=>d?new Date(d+'T12:00').toLocaleDateString('pt-BR'):'—';
 const cv=i=>conf('vac',i),rv=i=>rm('vac',i),openVac=()=>{scan={st:'',recs:[],msg:''};sheet({t:'vac'})},openShop=()=>sheet({t:'shop'});
 function vacCard(p){const hoje=new Date().toISOString().slice(0,10),v=(p.vac=p.vac||[]).map((x,i)=>({...x,i})).sort((a,b)=>a.d.localeCompare(b.d));
