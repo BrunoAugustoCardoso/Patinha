@@ -73,17 +73,18 @@ function sheet(s){S.sheet=s;S.err='';tmpFoto=(s&&s.t=='pet'&&s.id)?(pet(s.id).fo
 function age(n){if(!n)return'';const m=Math.floor((Date.now()-new Date(n))/2629800000);return m>=12?Math.floor(m/12)+' anos':m+' meses'}
 
 /* Tela 1 */
-function auth(){const m=S.mode,E=S.err?`<div class="err" role="alert">${h(S.err)}</div>`:'',M=S.msg?`<div class="msg">${h(S.msg)}</div>`:'';
-return `<div style="padding-top:40px"><div style="font-size:44px">🐾</div><h1>Patinha</h1><p class="mute">Saúde e rotina do seu pet em um só lugar.</p>${E}${M}
-<form onsubmit="event.preventDefault();doAuth()">
-${m=='signup'?`<label for="n">Nome</label><input id="n" autocomplete="name">`:''}
-${m=='signup'?`<label for="ci">Cidade</label><input id="ci" autocomplete="address-level2" placeholder="Ex.: Belo Horizonte">`:''}<label for="em">E-mail</label><input id="em" type="email" autocomplete="email">
-${m!='forgot'?`<label for="pw">Senha</label><input id="pw" type="password" autocomplete="${m=='login'?'current-password':'new-password'}">`:''}
-${m=='signup'?`<label class="ck"><input id="tm" type="checkbox"><span>Li e aceito os <button type="button" class="lnk" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button> e a <button type="button" class="lnk" onclick="sheet({t:'doc',k:'Política de privacidade'})">Política de privacidade</button>.</span></label>`:''}
-<button class="w">${m=='login'?'Entrar':m=='signup'?'Criar conta':'Enviar link de recuperação'}</button></form>
-<div class="row sp" style="margin-top:14px">${m=='login'?`<button class="lnk" onclick="go('auth',{mode:'forgot'})">Esqueci a senha</button><button class="lnk" onclick="go('auth',{mode:'signup'})">Criar conta</button>`:`<button class="lnk" onclick="go('auth',{mode:'login'})">Voltar para o login</button>`}</div>
-<p class="mute" style="margin-top:20px">Pedimos nome, cidade, e-mail e senha para criar sua conta. A cidade pode ajudar a organizar serviços e anúncios da sua região.</p></div>`}
-function maskCpf(i){const d=i.value.replace(/\D/g,'').slice(0,11);i.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
+function auth(){const m=S.mode,reset=m=='reset',E=S.err?'<div class="err" role="alert">'+h(S.err)+'</div>':'',M=S.msg?'<div class="msg">'+h(S.msg)+'</div>':'';
+ return `<div style="padding-top:40px"><div style="font-size:44px">🐾</div><h1>Patinha</h1><p class="mute">Saúde e rotina do seu pet em um só lugar.</p>${E}${M}
+ <form onsubmit="event.preventDefault();doAuth()">
+ ${m=='signup'?'<label for="n">Nome</label><input id="n" autocomplete="name">':''}
+ ${m=='signup'?'<label for="ci">Cidade</label><input id="ci" autocomplete="address-level2" placeholder="Ex.: Belo Horizonte">':''}
+ ${reset?'':'<label for="em">E-mail</label><input id="em" type="email" autocomplete="email">'}
+ ${m!='forgot'?'<label for="pw">'+(reset?'Nova senha':'Senha')+'</label><input id="pw" type="password" autocomplete="'+(m=='login'?'current-password':'new-password')+'">':''}
+ ${reset?'<label for="pw2">Repita a nova senha</label><input id="pw2" type="password" autocomplete="new-password">':''}
+ ${m=='signup'?'<label class="ck"><input id="tm" type="checkbox"><span>Li e aceito os <button type="button" class="lnk" onclick="sheet({t:\'doc\',k:\'Termos de uso\'})">Termos de uso</button> e a <button type="button" class="lnk" onclick="sheet({t:\'doc\',k:\'Política de privacidade\'})">Política de privacidade</button>.</span></label>':''}
+ <button class="w">${m=='login'?'Entrar':m=='signup'?'Criar conta':m=='reset'?'Salvar nova senha':'Enviar link de recuperação'}</button></form>
+ <div class="row sp" style="margin-top:14px">${m=='login'?'<button class="lnk" onclick="go(\'auth\',{mode:\'forgot\'})">Esqueci a senha</button><button class="lnk" onclick="go(\'auth\',{mode:\'signup\'})">Criar conta</button>':'<button class="lnk" onclick="go(\'auth\',{mode:\'login\'})">Voltar para o login</button>'}</div>
+ ${reset?'<p class="mute" style="margin-top:20px">Escolha uma senha com pelo menos 8 caracteres.</p>':m=='forgot'?'<p class="mute" style="margin-top:20px">Enviaremos um link para o e-mail informado, caso ele esteja cadastrado.</p>':'<p class="mute" style="margin-top:20px">Pedimos nome, cidade, e-mail e senha para criar sua conta. A cidade pode ajudar a organizar serviços e anúncios da sua região.</p>'}</div>`}function maskCpf(i){const d=i.value.replace(/\D/g,'').slice(0,11);i.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
 function cpfOk(c){const d=c.replace(/\D/g,'');if(d.length!=11||/^(\d)\1+$/.test(d))return false;for(const n of[9,10]){let s=0;for(let i=0;i<n;i++)s+=d[i]*(n+1-i);if((s*10%11)%10!=d[n])return false}return true}
 async function doLogout(){
  try{
@@ -105,13 +106,14 @@ async function doLogout(){
   R();
  }
 }
-async function doAuth(){const m=S.mode,em=$('em').value.trim();
+async function doAuth(){const m=S.mode;if(m=='reset')return saveRecoveredPassword();const em=$('em').value.trim();
 if(!/^\S+@\S+\.\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
-if(m=='forgot')return S.err='',S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.',R();
+if(m=='forgot'){try{const {error}=await db.auth.resetPasswordForEmail(em,{redirectTo:'https://brunoaugustocardoso.github.io/Patinha/'});if(error)throw error;S.err='';S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.';R()}catch(e){S.err=e.message||'Não foi possível enviar o link. Tente novamente.';S.msg='';R()}return}
 const pw=$('pw').value;if(pw.length<8)return S.err='A senha precisa ter ao menos 8 caracteres.',R();
 let nome=em.split('@')[0],cid='';
 if(m=='signup'){nome=$('n').value.trim();if(!nome)return S.err='Informe seu nome.',R();cid=$('ci').value.trim();if(!cid)return S.err='Informe sua cidade.',R();if(!$('tm').checked)return S.err='Para criar a conta, aceite os termos e a política de privacidade.',R()}
 try{if(m=='signup'){const {data,error}=await db.auth.signUp({email:em,password:pw,options:{data:{nome,cidade:cid}}});if(error)throw error;if(!data.session){S.msg='Conta criada! Confira seu e-mail para confirmar o cadastro e depois entre no Patinha.';return R()}currentUser=data.user;}else{const {data,error}=await db.auth.signInWithPassword({email:em,password:pw});if(error)throw error;currentUser=data.user;}await openUserData();}catch(e){S.err=e.message||'Não foi possível entrar. Confira seus dados.';R()}}
+async function saveRecoveredPassword(){const pw=$('pw').value,pw2=$('pw2').value;if(pw.length<8)return S.err='A nova senha precisa ter ao menos 8 caracteres.',R();if(pw!==pw2)return S.err='As senhas não coincidem.',R();try{const {error}=await db.auth.updateUser({password:pw});if(error)throw error;try{await db.auth.signOut()}catch(_){}currentUser=null;S.user=null;S.pets=[];S.events=[];S.fam=[];S.view='auth';S.mode='login';S.err='';S.msg='Senha alterada com sucesso. Entre com sua nova senha.';R()}catch(e){S.err=e.message||'Não foi possível alterar a senha. Solicite um novo link.';R()}}
 async function openUserData(){
  const {data:{user},error}=await db.auth.getUser(); if(error)throw error; currentUser=user;
  const meta=user.user_metadata||{}; S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:'',cidade:meta.cidade||'',foto:'',msgs:true};
@@ -311,6 +313,7 @@ return `<nav><div>${t.concat([['lojas','🏪','Comércios'],['dono','👤','Perf
 function R(){const V={auth,home,pets,perfil,agenda,anuncios,dono,lojas};let o='';
 if(S.sheet){const t=S.sheet.t;o=`<div class="ov" onclick="if(event.target==this)sheet(null)"><div class="sh">${{doc:docSheet,pet:petForm,del:delSheet,ev:evForm,ad:adForm,msg:msgSheet,donoF:donoForm,pw:pwForm,acc:accSheet,vac:vacForm,shop:shopForm,shopd:shopDet,famP:famPForm,inv:invForm}[t]()}</div></div>`}
 $('app').innerHTML=V[S.view]()+(S.view!='auth'?nav():'')+o;window.scrollTo(0,0)}
+db.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){S.view='auth';S.mode='reset';S.err='';S.msg='';S.sheet=null;R()}});
 boot();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").then(()=>checkUpcomingReminders()).catch(console.error));}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpcomingReminders()});
