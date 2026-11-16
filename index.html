@@ -301,7 +301,7 @@ async function deleteAccount(){
   if(reauthError)throw new Error('A senha atual está incorreta.');
   const {error:functionError}=await db.functions.invoke('delete-account',{method:'POST'});
   if(functionError)throw functionError;
-  await db.auth.signOut();
+  try{await db.auth.signOut()}catch(_){}
   currentUser=null;S.user=null;S.pets=[];S.events=[];S.fam=[];S.sheet=null;S.view='auth';S.mode='login';S.err='';S.msg='Sua conta e seus dados foram excluídos permanentemente.';R();
  }catch(e){
   S.err=e.message==='A senha atual está incorreta.'?e.message:(e.message||'Não foi possível excluir a conta. Tente novamente.');
