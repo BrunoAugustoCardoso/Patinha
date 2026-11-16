@@ -113,12 +113,12 @@ async function persistCurrentPet(){try{const p=pet(S.petId);if(p)await persistPe
 function reminderStorageKey(){return 'patinha_notified_'+(currentUser?.id||'guest')}
 async function checkUpcomingReminders(){
  if(!currentUser||!('Notification' in window)||Notification.permission!=='granted')return;
- const now=Date.now(),limit=now+24*60*60*1000,key=reminderStorageKey();
+ const now=Date.now(),from=now-2*60*1000,limit=now+5*60*1000,key=reminderStorageKey();
  let sent=[];try{sent=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){}
  for(const e of S.events){
   if(e.st!=='agendado')continue;
   const when=new Date(e.dt).getTime();
-  if(!Number.isFinite(when)||when<now||when>limit||sent.includes(String(e.id)))continue;
+  if(!Number.isFinite(when)||when<from||when>limit||sent.includes(String(e.id)))continue;
   const p=pet(e.pet),petName=p?.nome||'seu pet';
   const title='Lembrete do Patinha 🐾';
   const body=petName+' — '+e.tit+' ('+new Date(e.dt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+').';
@@ -197,7 +197,7 @@ return `<h2>Agendar cuidado</h2>${S.err?`<div class="err">${S.err}</div>`:''}<fo
 <label for="ei">Descrição</label><input id="ei" placeholder="Ex.: reforço da vacina">
 <label for="ed">Data e hora</label><input id="ed" type="datetime-local" value="${day(1)}"><button class="w">Salvar evento</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
 async function saveEv(){const t=$('ei').value.trim()||$('et').value,d=$('ed').value;if(!d)return S.err='Informe a data e a hora.',R();
-const e={id:uid(),pet:$('ep').value,tipo:$('et').value,tit:t,dt:d,st:'agendado'};const p=pet(e.pet);if(!p)return S.err='Pet não encontrado. Tente novamente.',R();S.err='';S.events.push(e);try{await persistPet(p);S.sheet=null;S.msg='Evento salvo no calendário!';R()}catch(err){S.events=S.events.filter(x=>x.id!==e.id);S.err='Não foi possível salvar o evento: '+err.message;R()}}
+const e={id:uid(),pet:$('ep').value,tipo:$('et').value,tit:t,dt:d,st:'agendado'};const p=pet(e.pet);if(!p)return S.err='Pet não encontrado. Tente novamente.',R();S.err='';S.events.push(e);try{await persistPet(p);S.sheet=null;S.msg='Evento salvo no calendário!';R();checkUpcomingReminders()}catch(err){S.events=S.events.filter(x=>x.id!==e.id);S.err='Não foi possível salvar o evento: '+err.message;R()}}
 
 /* Tela 6 */
 function anuncios(){const l=S.ads.filter(a=>!S.aTipo||a.tipo==S.aTipo);
@@ -271,5 +271,5 @@ $('app').innerHTML=V[S.view]()+(S.view!='auth'?nav():'')+o;window.scrollTo(0,0)}
 boot();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").then(()=>checkUpcomingReminders()).catch(console.error));}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpcomingReminders()});
-setInterval(checkUpcomingReminders,15*60*1000);
+setInterval(checkUpcomingReminders,60*1000);
 </script></body></html>
