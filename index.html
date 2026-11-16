@@ -153,7 +153,7 @@ async function boot(){try{const {data:{session}}=await db.auth.getSession();if(s
 function docSheet(){const k=S.sheet.k;return `<h2>${k}</h2><p class="mute">Texto de exemplo do protótipo. Aqui entra o documento completo, incluindo quais dados são coletados, para quê e como excluí-los.</p><button class="w" onclick="sheet(null)">Fechar</button>`}
 
 /* Tela 2 */
-function evCard(e,act){const p=pet(e.pet);return `<div class="card row ${e.st!='agendado'?'off':''}">${av(p)}<div class="grow"><b>${h(e.tit)}</b><div class="mute">${h(p?.nome)} · ${e.tipo} · ${fmt(e.dt)}</div>${e.st!='agendado'?`<span class="tag ${e.st=='cancelado'?'c':''}">${e.st=='realizado'?'Realizado':'Cancelado'}</span>`:''}</div>${act&&e.st=='agendado'?`<div style="display:grid;gap:6px"><button class="sm" onclick="setEv('${e.id}','realizado')">Realizado</button><button class="sm d" onclick="setEv('${e.id}','cancelado')">Cancelar</button></div>`:''}</div>`}
+function evCard(e,act){const p=pet(e.pet);return `<div class="card row ${e.st!='agendado'?'off':''}">${av(p)}<div class="grow"><b>${h(e.tit)}</b><div class="mute">${h(p?.nome)} · ${e.tipo} · ${fmt(e.dt)}</div>${e.st!='agendado'? `<span class="tag ${e.st=='cancelado'?'c':''}">${e.st=='realizado'?'Realizado':'Cancelado'}</span>`:''}</div>${act&&e.st=='agendado'? `<div style="display:grid;gap:6px"><button class="sm" onclick="setEv('${e.id}','realizado')">Realizado</button><button class="sm d" onclick="setEv('${e.id}','cancelado')">Cancelar</button></div>`:act?`<button class="sm d" onclick="deleteEv('${e.id}')">Excluir</button>`:''}</div>`}
 const prox=()=>S.events.filter(e=>e.st=='agendado').sort((a,b)=>a.dt.localeCompare(b.dt));
 function home(){const ps=S.pets.filter(p=>p.ativo),pr=prox().slice(0,3);
 return `<h1>Olá, ${h(S.user.nome)}</h1>
@@ -161,6 +161,15 @@ return `<h1>Olá, ${h(S.user.nome)}</h1>
 <h2>Meus pets</h2>${ps.length?`<div class="chips">${ps.map(p=>`<button class="chip" onclick="go('perfil',{petId:'${p.id}',tab:'geral'})">${ESP[p.esp]} ${h(p.nome)}</button>`).join('')}</div>`:'<div class="empty">Nenhum pet ativo. Adicione o primeiro.</div>'}
 <h2>Próximos eventos</h2>${pr.length?pr.map(e=>evCard(e)).join(''):'<div class="empty">Nada agendado.</div>'}`}
 async function setEv(id,st){const e=S.events.find(e=>e.id==id);if(!e)return;const old=e.st;e.st=st;const p=pet(e.pet);try{if(p)await persistPet(p);await checkUpcomingReminders();S.msg='Status do evento salvo!';R()}catch(err){e.st=old;S.err='Não foi possível salvar o status: '+err.message;R()}}
+async function deleteEv(id){
+ const e=S.events.find(x=>String(x.id)===String(id));
+ if(!e||!["realizado","cancelado"].includes(String(e.st||"").toLowerCase()))return;
+ if(!confirm("Excluir este evento "+(e.st==="realizado"?"realizado":"cancelado")+" permanentemente?"))return;
+ const p=pet(e.pet),old=S.events.slice();
+ S.events=S.events.filter(x=>String(x.id)!==String(id));
+ try{if(p)await persistPet(p);await checkUpcomingReminders();S.msg="Evento excluído da agenda.";R()}
+ catch(err){S.events=old;S.err="Não foi possível excluir o evento: "+err.message;R()}
+}
 
 /* Tela 3 */
 function pets(){return `<div class="row sp"><h1>Meus pets</h1><button class="sm" onclick="sheet({t:'pet'})">+ Adicionar pet</button></div>
