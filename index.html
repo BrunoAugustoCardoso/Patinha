@@ -109,21 +109,35 @@ async function persistPet(p){if(!currentUser)throw new Error('Entre na sua conta
  p.fotoPath=path;p.foto=path?await signedPetPhoto(path):'';
 }
 async function persistCurrentPet(){try{const p=pet(S.petId);if(p)await persistPet(p)}catch(e){S.err='Alteração feita na tela, mas não foi sincronizada: '+(e.message||'erro');R()}}
-// Lembretes do navegador: são verificados enquanto o Patinha está aberto.
+// Lembretes do navegador: somente eventos agendados podem gerar avisos.
 function reminderStorageKey(){return 'patinha_notified_'+(currentUser?.id||'guest')}
 async function checkUpcomingReminders(){
  if(!currentUser||!('Notification' in window)||Notification.permission!=='granted')return;
- const now=Date.now(),from=now-2*60*1000,limit=now+5*60*1000,key=reminderStorageKey();
+ const key=reminderStorageKey();
+ const activeEvents=S.events.filter(e=>String(e.st||'').toLowerCase()==='agendado');
+ const activeIds=new Set(activeEvents.map(e=>String(e.id)));
  let sent=[];try{sent=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){}
- for(const e of S.events){
-  if(e.st!=='agendado')continue;
+ // Descarta o controle de eventos concluídos/cancelados e fecha avisos ainda visíveis.
+ sent=sent.filter(id=>activeIds.has(String(id)));
+ if('serviceWorker' in navigator){
+  try{
+   const reg=await navigator.serviceWorker.ready;
+   const visible=await reg.getNotifications();
+   visible.forEach(n=>{
+    const id=(n.tag||'').replace(/^patinha-/,'');
+    if((n.tag||'').startsWith('patinha-')&&!activeIds.has(id))n.close();
+   });
+  }catch(err){console.warn('Não foi possível atualizar avisos antigos:',err)}
+ }
+ const now=Date.now(),from=now-2*60*1000,limit=now+5*60*1000;
+ for(const e of activeEvents){
   const when=new Date(e.dt).getTime();
   if(!Number.isFinite(when)||when<from||when>limit||sent.includes(String(e.id)))continue;
   const p=pet(e.pet),petName=p?.nome||'seu pet';
   const title='Lembrete do Patinha 🐾';
   const body=petName+' — '+e.tit+' ('+new Date(e.dt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+').';
   try{
-   if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.ready;await reg.showNotification(title,{body,tag:'patinha-'+e.id,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png'});}
+   if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.ready;await reg.showNotification(title,{body,tag:'patinha-'+e.id,icon:'./icons/patinha.svg',badge:'./icons/patinha.svg'});}
    else new Notification(title,{body});
    sent.push(String(e.id));
   }catch(err){console.warn('Não foi possível exibir o lembrete:',err)}
@@ -146,7 +160,7 @@ return `<h1>Olá, ${h(S.user.nome)}</h1>
 <div class="row"><button class="grow" onclick="sheet({t:'pet'})">+ Adicionar pet</button><button class="grow s" onclick="sheet({t:'ev'})">Agendar cuidado</button></div>
 <h2>Meus pets</h2>${ps.length?`<div class="chips">${ps.map(p=>`<button class="chip" onclick="go('perfil',{petId:'${p.id}',tab:'geral'})">${ESP[p.esp]} ${h(p.nome)}</button>`).join('')}</div>`:'<div class="empty">Nenhum pet ativo. Adicione o primeiro.</div>'}
 <h2>Próximos eventos</h2>${pr.length?pr.map(e=>evCard(e)).join(''):'<div class="empty">Nada agendado.</div>'}`}
-async function setEv(id,st){const e=S.events.find(e=>e.id==id);if(!e)return;const old=e.st;e.st=st;const p=pet(e.pet);try{if(p)await persistPet(p);S.msg='Status do evento salvo!';R()}catch(err){e.st=old;S.err='Não foi possível salvar o status: '+err.message;R()}}
+async function setEv(id,st){const e=S.events.find(e=>e.id==id);if(!e)return;const old=e.st;e.st=st;const p=pet(e.pet);try{if(p)await persistPet(p);await checkUpcomingReminders();S.msg='Status do evento salvo!';R()}catch(err){e.st=old;S.err='Não foi possível salvar o status: '+err.message;R()}}
 
 /* Tela 3 */
 function pets(){return `<div class="row sp"><h1>Meus pets</h1><button class="sm" onclick="sheet({t:'pet'})">+ Adicionar pet</button></div>
