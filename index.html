@@ -116,7 +116,8 @@ try{if(m=='signup'){const {data,error}=await db.auth.signUp({email:em,password:p
 async function saveRecoveredPassword(){const pw=$('pw').value,pw2=$('pw2').value;if(pw.length<8)return S.err='A nova senha precisa ter ao menos 8 caracteres.',R();if(pw!==pw2)return S.err='As senhas não coincidem.',R();try{const {error}=await db.auth.updateUser({password:pw});if(error)throw error;try{await db.auth.signOut()}catch(_){}currentUser=null;S.user=null;S.pets=[];S.events=[];S.fam=[];S.view='auth';S.mode='login';S.err='';S.msg='Senha alterada com sucesso. Entre com sua nova senha.';R()}catch(e){S.err=e.message||'Não foi possível alterar a senha. Solicite um novo link.';R()}}
 async function openUserData(){
  const {data:{user},error}=await db.auth.getUser(); if(error)throw error; currentUser=user;
- const meta=user.user_metadata||{}; S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:'',cidade:meta.cidade||'',foto:'',msgs:true};
+ const meta=user.user_metadata||{}; S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:meta.tel||'',cidade:meta.cidade||'',foto:'',fotoPath:meta.fotoPath||'',msgs:meta.msgs!==false};
+ if(S.user.fotoPath){try{S.user.foto=await signedPetPhoto(S.user.fotoPath)}catch(e){console.warn('Foto do perfil não carregada:',e.message)}}
  const {data,error:readError}=await db.from('pets').select('local_id,app_data').eq('user_id',user.id); if(readError)throw readError;
  S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id})); await Promise.all(S.pets.map(async p=>{if(p.fotoPath){try{p.foto=await signedPetPhoto(p.fotoPath)}catch(e){console.warn('Foto não carregada:',e.message)}}})); S.events=S.pets.flatMap(p=>p.eventos||[]); S.fam=[]; S.view='home'; S.mode='login'; S.err=''; S.msg=''; R(); checkUpcomingReminders();
 }
@@ -269,7 +270,41 @@ ${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos d
 <h2>Sua conta</h2><div class="row" style="margin-bottom:10px"><button class="sm s grow" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button><button class="sm s grow" onclick="sheet({t:'doc',k:'Política de privacidade'})">Privacidade</button></div>
 <button class="s w" style="margin-bottom:10px" onclick="doLogout()">Sair</button><button class="d w" onclick="sheet({t:'acc'})">Excluir minha conta</button>`}
 function donoForm(){const u=S.user;return `<h2>Editar dados</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveDono()">${photoField()}<label for="dn">Nome</label><input id="dn" value="${h(u.nome)}" autocomplete="name"><label for="de">E-mail</label><input id="de" type="email" value="${h(u.email)}" autocomplete="email"><label for="dt">Telefone (opcional)</label><input id="dt" type="tel" value="${h(u.tel)}" autocomplete="tel"><label for="dc">Cidade ou região (opcional)</label><input id="dc" value="${h(u.cidade)}"><button class="w">Salvar dados</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
-function saveDono(){const n=$('dn').value.trim(),e=$('de').value.trim();if(!n)return S.err='Informe seu nome.',R();if(!/^\S+@\S+\.\S+$/.test(e))return S.err='Informe um e-mail válido.',R();Object.assign(S.user,{nome:n,email:e,tel:$('dt').value.trim(),cidade:$('dc').value.trim(),foto:tmpFoto});S.sheet=null;S.msg='Dados atualizados.';tmpFoto='';R()}
+async function saveDono(){
+ const n=$('dn').value.trim(),e=$('de').value.trim(),tel=$('dt').value.trim(),cidade=$('dc').value.trim();
+ if(!n)return S.err='Informe seu nome.',R();
+ if(!/^\\S+@\\S+\\.\\S+$/.test(e))return S.err='Informe um e-mail válido.',R();
+ if(!currentUser)return S.err='Sua sessão expirou. Entre novamente.',R();
+ const oldEmail=currentUser.email,oldPhotoPath=S.user.fotoPath||null;
+ try{
+  let fotoPath=oldPhotoPath;
+  if(tmpFoto&&tmpFoto.startsWith('data:image/'))fotoPath=await uploadProfilePhoto(tmpFoto);
+  else if(!tmpFoto)fotoPath=null;
+  const metadata={...(currentUser.user_metadata||{}),nome:n,tel,cidade,msgs:S.user.msgs!==false,fotoPath};
+  const {error:dataError}=await db.auth.updateUser({data:metadata});
+  if(dataError)throw dataError;
+  let emailPending=false;
+  if(e.toLowerCase()!==oldEmail.toLowerCase()){
+   const {error:emailError}=await db.auth.updateUser({email:e});
+   if(emailError)throw emailError;
+   emailPending=true;
+  }
+  const {data:{user},error:userError}=await db.auth.getUser();
+  if(userError)throw userError;
+  currentUser=user;
+  S.user={nome:n,email:user.email,tel,cidade,msgs:metadata.msgs,fotoPath,foto:fotoPath?await signedPetPhoto(fotoPath):''};
+  if(oldPhotoPath&&oldPhotoPath!==fotoPath){const {error:removeError}=await db.storage.from('fotos-pets').remove([oldPhotoPath]);if(removeError)console.warn('Foto antiga do perfil não removida:',removeError.message)}
+  S.sheet=null;S.err='';S.msg=emailPending?'Perfil salvo. Enviamos uma confirmação para o novo e-mail; o endereço só será alterado após a confirmação.':'Perfil salvo e sincronizado com sua conta.';
+  tmpFoto='';R();
+ }catch(err){S.err='Não foi possível salvar o perfil: '+(err.message||'tente novamente.');R()}
+}
+async function uploadProfilePhoto(dataUrl){
+ const blob=await (await fetch(dataUrl)).blob();
+ const path=currentUser.id+'/profile.jpg';
+ const {error}=await db.storage.from('fotos-pets').upload(path,blob,{contentType:'image/jpeg',upsert:true,cacheControl:'3600'});
+ if(error)throw error;
+ return path;
+}
 function pwForm(){return `<h2>Alterar senha</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();savePw()"><label for="p0">Senha atual</label><input id="p0" type="password" autocomplete="current-password"><label for="p1">Nova senha</label><input id="p1" type="password" autocomplete="new-password"><label for="p2">Repita a nova senha</label><input id="p2" type="password" autocomplete="new-password"><button class="w">Salvar nova senha</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
 async function savePw(){
  const atual=$('p0').value,nova=$('p1').value,confirma=$('p2').value;
