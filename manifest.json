@@ -1,15 +1,23 @@
 {
   "name": "Patinha — cuidados do seu pet",
   "short_name": "Patinha",
-  "description": "Organize os cuidados e a saúde dos seus pets.",
-  "start_url": "./index.html",
+  "description": "Organize a saúde, os cuidados e a rotina dos seus pets em um só lugar.",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#f3eeff",
   "theme_color": "#7c3aed",
   "orientation": "portrait",
   "icons": [
-    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {
+      "src": "./icons/patinha.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ]
 }
