@@ -271,7 +271,24 @@ ${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos d
 function donoForm(){const u=S.user;return `<h2>Editar dados</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveDono()">${photoField()}<label for="dn">Nome</label><input id="dn" value="${h(u.nome)}" autocomplete="name"><label for="de">E-mail</label><input id="de" type="email" value="${h(u.email)}" autocomplete="email"><label for="dt">Telefone (opcional)</label><input id="dt" type="tel" value="${h(u.tel)}" autocomplete="tel"><label for="dc">Cidade ou região (opcional)</label><input id="dc" value="${h(u.cidade)}"><button class="w">Salvar dados</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
 function saveDono(){const n=$('dn').value.trim(),e=$('de').value.trim();if(!n)return S.err='Informe seu nome.',R();if(!/^\S+@\S+\.\S+$/.test(e))return S.err='Informe um e-mail válido.',R();Object.assign(S.user,{nome:n,email:e,tel:$('dt').value.trim(),cidade:$('dc').value.trim(),foto:tmpFoto});S.sheet=null;S.msg='Dados atualizados.';tmpFoto='';R()}
 function pwForm(){return `<h2>Alterar senha</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();savePw()"><label for="p0">Senha atual</label><input id="p0" type="password" autocomplete="current-password"><label for="p1">Nova senha</label><input id="p1" type="password" autocomplete="new-password"><label for="p2">Repita a nova senha</label><input id="p2" type="password" autocomplete="new-password"><button class="w">Salvar nova senha</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
-function savePw(){if(!$('p0').value)return S.err='Informe a senha atual.',R();if($('p1').value.length<8)return S.err='A nova senha precisa ter ao menos 8 caracteres.',R();if($('p1').value!==$('p2').value)return S.err='As senhas não coincidem.',R();S.sheet=null;S.msg='Senha alterada.';R()}
+async function savePw(){
+ const atual=$('p0').value,nova=$('p1').value,confirma=$('p2').value;
+ if(!atual)return S.err='Informe a senha atual.',R();
+ if(nova.length<8)return S.err='A nova senha precisa ter ao menos 8 caracteres.',R();
+ if(nova!==confirma)return S.err='As senhas não coincidem.',R();
+ if(!currentUser?.email)return S.err='Sua sessão expirou. Entre novamente e tente outra vez.',R();
+ try{
+  const {error:loginError}=await db.auth.signInWithPassword({email:currentUser.email,password:atual});
+  if(loginError)throw new Error('A senha atual está incorreta.');
+  const {error:updateError}=await db.auth.updateUser({password:nova});
+  if(updateError)throw updateError;
+  S.sheet=null;S.err='';S.msg='Senha alterada com sucesso.';
+  R();
+ }catch(e){
+  S.err=e.message==='A senha atual está incorreta.'?e.message:(e.message||'Não foi possível alterar a senha. Tente novamente.');
+  R();
+ }
+}
 const accSheet=()=>`<h2>Excluir sua conta?</h2><p class="mute">Apagamos seus dados, seus pets, os eventos e os anúncios que você publicou. Não dá para desfazer.</p><button class="w d" onclick="S.user=null;S.pets=[];S.events=[];S.ads=S.ads.filter(a=>!a.mine);S.mode='login';go('auth',{msg:'Sua conta e seus dados foram excluídos.'})">Excluir conta e dados</button><button class="w g" onclick="sheet(null)">Cancelar</button>`;
 const fd=d=>d?new Date(d+'T12:00').toLocaleDateString('pt-BR'):'—';
 const cv=i=>conf('vac',i),rv=i=>rm('vac',i),openVac=()=>{scan={st:'',recs:[],msg:''};sheet({t:'vac'})},openShop=()=>sheet({t:'shop'});
