@@ -107,7 +107,7 @@ async function doLogout(){
  }
 }
 async function doAuth(){const m=S.mode;if(m=='reset')return saveRecoveredPassword();const em=$('em').value.trim();
-if(!/^\\S+@\\S+\\.\\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
+if(!/^\S+@\S+\.\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
 if(m=='forgot'){try{const {error}=await db.auth.resetPasswordForEmail(em,{redirectTo:'https://brunoaugustocardoso.github.io/Patinha/'});if(error)throw error;S.err='';S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.';R()}catch(e){S.err=e.message||'Não foi possível enviar o link. Tente novamente.';S.msg='';R()}return}
 const pw=$('pw').value;if(pw.length<8)return S.err='A senha precisa ter ao menos 8 caracteres.',R();
 let nome=em.split('@')[0],cid='';
@@ -313,7 +313,8 @@ return `<nav><div>${t.concat([['lojas','🏪','Comércios'],['dono','👤','Perf
 function R(){const V={auth,home,pets,perfil,agenda,anuncios,dono,lojas};let o='';
 if(S.sheet){const t=S.sheet.t;o=`<div class="ov" onclick="if(event.target==this)sheet(null)"><div class="sh">${{doc:docSheet,pet:petForm,del:delSheet,ev:evForm,ad:adForm,msg:msgSheet,donoF:donoForm,pw:pwForm,acc:accSheet,vac:vacForm,shop:shopForm,shopd:shopDet,famP:famPForm,inv:invForm}[t]()}</div></div>`}
 $('app').innerHTML=V[S.view]()+(S.view!='auth'?nav():'')+o;window.scrollTo(0,0)}
-db.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){S.view='auth';S.mode='reset';S.err='';S.msg='';S.sheet=null;R()}});\nboot();
+db.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){S.view='auth';S.mode='reset';S.err='';S.msg='';S.sheet=null;R()}});
+boot();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").then(()=>checkUpcomingReminders()).catch(console.error));}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpcomingReminders()});
 setInterval(checkUpcomingReminders,60*1000);
