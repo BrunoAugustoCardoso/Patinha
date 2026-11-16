@@ -85,6 +85,26 @@ ${m=='signup'?`<label class="ck"><input id="tm" type="checkbox"><span>Li e aceit
 <p class="mute" style="margin-top:20px">Pedimos nome, cidade, e-mail e senha para criar sua conta. A cidade pode ajudar a organizar serviços e anúncios da sua região.</p></div>`}
 function maskCpf(i){const d=i.value.replace(/\D/g,'').slice(0,11);i.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
 function cpfOk(c){const d=c.replace(/\D/g,'');if(d.length!=11||/^(\d)\1+$/.test(d))return false;for(const n of[9,10]){let s=0;for(let i=0;i<n;i++)s+=d[i]*(n+1-i);if((s*10%11)%10!=d[n])return false}return true}
+async function doLogout(){
+ try{
+  const {error}=await db.auth.signOut();
+  if(error)throw error;
+  currentUser=null;
+  S.user=null;
+  S.pets=[];
+  S.events=[];
+  S.fam=[];
+  S.sheet=null;
+  S.view='auth';
+  S.mode='login';
+  S.err='';
+  S.msg='Você saiu da sua conta.';
+  R();
+ }catch(e){
+  S.err='Não foi possível encerrar a sessão. Tente novamente.';
+  R();
+ }
+}
 async function doAuth(){const m=S.mode,em=$('em').value.trim();
 if(!/^\S+@\S+\.\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
 if(m=='forgot')return S.err='',S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.',R();
@@ -245,7 +265,7 @@ return `<h1>Meu perfil</h1>${S.msg?`<div class="msg">${h(S.msg)}</div>`:''}
 ${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos de cuidados</b><p class="mute">Receba avisos do navegador sobre vacinas, medicamentos, consultas e outros eventos agendados para as próximas 24 horas. Para esta primeira versão, o Patinha precisa estar aberto.</p><button class="w" onclick="enableReminders()">Ativar notificações</button><p class="mute" style="margin:8px 0 0">Você pode alterar a permissão nas configurações do navegador a qualquer momento.</p></div><h2>Privacidade</h2><div class="card"><label class="ck"><input type="checkbox" ${u.msgs!==false?'checked':''} onchange="S.user.msgs=this.checked"><span>Permitir mensagens de outras pessoas pelos meus anúncios</span></label><div class="mute">Seu e-mail, telefone e senha nunca aparecem para outros usuários. Os anúncios mostram só o animal e a região.</div></div>
 <h2>Segurança</h2><button class="s w" onclick="sheet({t:'pw'})">Alterar senha</button>
 <h2>Sua conta</h2><div class="row" style="margin-bottom:10px"><button class="sm s grow" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button><button class="sm s grow" onclick="sheet({t:'doc',k:'Política de privacidade'})">Privacidade</button></div>
-<button class="s w" style="margin-bottom:10px" onclick="S.user=null;S.mode='login';go('auth')">Sair</button><button class="d w" onclick="sheet({t:'acc'})">Excluir minha conta</button>`}
+<button class="s w" style="margin-bottom:10px" onclick="doLogout()">Sair</button><button class="d w" onclick="sheet({t:'acc'})">Excluir minha conta</button>`}
 function donoForm(){const u=S.user;return `<h2>Editar dados</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveDono()">${photoField()}<label for="dn">Nome</label><input id="dn" value="${h(u.nome)}" autocomplete="name"><label for="de">E-mail</label><input id="de" type="email" value="${h(u.email)}" autocomplete="email"><label for="dt">Telefone (opcional)</label><input id="dt" type="tel" value="${h(u.tel)}" autocomplete="tel"><label for="dc">Cidade ou região (opcional)</label><input id="dc" value="${h(u.cidade)}"><button class="w">Salvar dados</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
 function saveDono(){const n=$('dn').value.trim(),e=$('de').value.trim();if(!n)return S.err='Informe seu nome.',R();if(!/^\S+@\S+\.\S+$/.test(e))return S.err='Informe um e-mail válido.',R();Object.assign(S.user,{nome:n,email:e,tel:$('dt').value.trim(),cidade:$('dc').value.trim(),foto:tmpFoto});S.sheet=null;S.msg='Dados atualizados.';tmpFoto='';R()}
 function pwForm(){return `<h2>Alterar senha</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();savePw()"><label for="p0">Senha atual</label><input id="p0" type="password" autocomplete="current-password"><label for="p1">Nova senha</label><input id="p1" type="password" autocomplete="new-password"><label for="p2">Repita a nova senha</label><input id="p2" type="password" autocomplete="new-password"><button class="w">Salvar nova senha</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
