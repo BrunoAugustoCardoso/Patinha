@@ -106,9 +106,9 @@ async function doLogout(){
   R();
  }
 }
-async function doAuth(){const m=S.mode,em=$('em').value.trim();
-if(!/^\S+@\S+\.\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
-if(m=='reset')return saveRecoveredPassword();\nif(m=='forgot'){try{const {error}=await db.auth.resetPasswordForEmail(em,{redirectTo:'https://brunoaugustocardoso.github.io/Patinha/'});if(error)throw error;S.err='';S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.';R();}catch(e){S.err=e.message||'Não foi possível enviar o link. Tente novamente.';S.msg='';R()}return}
+async function doAuth(){const m=S.mode;if(m=='reset')return saveRecoveredPassword();const em=$('em').value.trim();
+if(!/^\\S+@\\S+\\.\\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
+if(m=='forgot'){try{const {error}=await db.auth.resetPasswordForEmail(em,{redirectTo:'https://brunoaugustocardoso.github.io/Patinha/'});if(error)throw error;S.err='';S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.';R()}catch(e){S.err=e.message||'Não foi possível enviar o link. Tente novamente.';S.msg='';R()}return}
 const pw=$('pw').value;if(pw.length<8)return S.err='A senha precisa ter ao menos 8 caracteres.',R();
 let nome=em.split('@')[0],cid='';
 if(m=='signup'){nome=$('n').value.trim();if(!nome)return S.err='Informe seu nome.',R();cid=$('ci').value.trim();if(!cid)return S.err='Informe sua cidade.',R();if(!$('tm').checked)return S.err='Para criar a conta, aceite os termos e a política de privacidade.',R()}
