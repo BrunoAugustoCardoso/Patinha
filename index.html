@@ -41,6 +41,23 @@ button{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff}.chip.on{ba
 .vi{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px;border-bottom:2px dashed var(--line)}.vr{display:flex;gap:12px;padding:12px 14px;border-bottom:1px dashed var(--line);align-items:flex-start}.vr:nth-child(even){background:rgba(124,58,237,.07)}
 .vc small{display:block;color:var(--mute);font-size:12px}.vd{min-width:78px}.vs{display:grid;gap:6px;justify-items:end}.late{color:var(--bad-i)}
 .stamp{border:2px solid var(--ok-i);color:var(--ok-i);border-radius:8px;padding:2px 7px;font-size:11px;font-weight:800;transform:rotate(-5deg);display:inline-block}
+
+/* Apresentação da tela inicial */
+.home-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 16px}
+.brand-lockup{display:flex;align-items:center;gap:10px}.brand-mark{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;font-size:25px;box-shadow:0 5px 14px rgba(124,58,237,.22)}
+.brand-name{font-size:20px;font-weight:800;line-height:1.1;letter-spacing:-.4px}.brand-caption{font-size:12px;color:var(--mute);margin-top:3px}
+.home-hero{position:relative;overflow:hidden;padding:20px;border:0;border-radius:22px;color:#fff;background:linear-gradient(135deg,#6d28d9 0%,#9333ea 52%,#db2777 100%);box-shadow:0 10px 24px rgba(124,58,237,.2);margin-bottom:16px}
+.home-hero:after{content:"🐾";position:absolute;right:12px;bottom:-20px;font-size:104px;opacity:.13;transform:rotate(-18deg)}
+.home-hero h1{color:#fff;background:none;-webkit-text-fill-color:#fff;font-size:25px;line-height:1.15;margin:0 0 7px;max-width:250px}
+.home-hero p{color:rgba(255,255,255,.88);font-size:14px;margin:0 0 16px;max-width:260px}
+.home-hero .hero-actions{display:flex;gap:8px;position:relative;z-index:1;flex-wrap:wrap}.home-hero .hero-actions button{background:#fff;color:#6d28d9;border:0;box-shadow:none}.home-hero .hero-actions button.secondary{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.55)}
+.home-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 20px}.home-stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;align-items:center;gap:10px;min-width:0}
+.home-stat-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:13px;background:rgba(124,58,237,.1);font-size:20px;flex:none}.home-stat strong{display:block;font-size:20px;line-height:1.1}.home-stat span:last-child{font-size:12px;color:var(--mute)}
+.home-section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 9px}.home-section-title h2{margin:0;font-size:17px}.home-section-title button{padding:5px 7px;font-size:13px}
+.home-pet{display:flex;align-items:center;gap:10px;min-width:0;padding:11px;background:var(--card);border:1px solid var(--line);border-radius:15px}.home-pet .av{width:48px;height:48px}.home-pet-name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-pet-meta{display:block;font-size:12px;color:var(--mute)}
+.home-empty{background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:18px 14px;text-align:center;color:var(--mute);font-size:14px}.home-empty .empty-icon{font-size:30px;margin-bottom:6px}
+@media(min-width:500px){#app{padding-top:22px}.home-hero{padding:24px}.home-stats{gap:12px}}
+
 </style>
 </head>
 <body><div id="app"></div>
@@ -178,11 +195,17 @@ function docSheet(){const k=S.sheet.k;return `<h2>${k}</h2><p class="mute">Texto
 /* Tela 2 */
 function evCard(e,act){const p=pet(e.pet);return `<div class="card row ${e.st!='agendado'?'off':''}">${av(p)}<div class="grow"><b>${h(e.tit)}</b><div class="mute">${h(p?.nome)} · ${e.tipo} · ${fmt(e.dt)}</div>${e.st!='agendado'? `<span class="tag ${e.st=='cancelado'?'c':''}">${e.st=='realizado'?'Realizado':'Cancelado'}</span>`:''}</div>${act&&e.st=='agendado'? `<div style="display:grid;gap:6px"><button class="sm" onclick="setEv('${e.id}','realizado')">Realizado</button><button class="sm d" onclick="setEv('${e.id}','cancelado')">Cancelar</button></div>`:act?`<button class="sm d" onclick="deleteEv('${e.id}')">Excluir</button>`:''}</div>`}
 const prox=()=>S.events.filter(e=>e.st=='agendado').sort((a,b)=>a.dt.localeCompare(b.dt));
-function home(){const ps=S.pets.filter(p=>p.ativo),pr=prox().slice(0,3);
-return `<h1>Olá, ${h(S.user.nome)}</h1>
-<div class="row"><button class="grow" onclick="sheet({t:'pet'})">+ Adicionar pet</button><button class="grow s" onclick="sheet({t:'ev'})">Agendar cuidado</button></div>
-<h2>Meus pets</h2>${ps.length?`<div class="chips">${ps.map(p=>`<button class="chip" onclick="go('perfil',{petId:'${p.id}',tab:'geral'})">${ESP[p.esp]} ${h(p.nome)}</button>`).join('')}</div>`:'<div class="empty">Nenhum pet ativo. Adicione o primeiro.</div>'}
-<h2>Próximos eventos</h2>${pr.length?pr.map(e=>evCard(e)).join(''):'<div class="empty">Nada agendado.</div>'}`}
+function home(){
+ const ps=S.pets.filter(p=>p.ativo),pr=prox().slice(0,3),totalEvents=prox().length;
+ const greeting=S.user.nome?S.user.nome.trim().split(/\s+/)[0]:'tutor(a)';
+ const petCards=ps.length?ps.map(p=>`<button class="home-pet" style="text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);box-shadow:none;padding:10px" onclick="go('perfil',{petId:'${p.id}',tab:'geral'})">${av(p)}<span class="grow" style="min-width:0"><span class="home-pet-name">${ESP[p.esp]||'🐾'} ${h(p.nome)}</span><span class="home-pet-meta">${h(p.raca||p.esp)}${p.nasc?' · '+age(p.nasc):''}</span></span><span aria-hidden="true" style="font-size:20px;color:var(--mute)">›</span></button>`).join(''):'<div class="home-empty"><div class="empty-icon">🐾</div><b>Seu primeiro companheiro começa aqui</b><p style="margin:5px 0 12px">Cadastre seu pet para organizar vacinas, consultas e cuidados.</p><button class="sm" onclick="sheet({t:\'pet\'})">Adicionar primeiro pet</button></div>';
+ return `<header class="home-head"><div class="brand-lockup"><div class="brand-mark" aria-hidden="true">🐾</div><div><div class="brand-name">Patinha</div><div class="brand-caption">Cuidado e carinho em cada fase</div></div></div><button class="g" aria-label="Abrir perfil" onclick="go('dono')" style="font-size:24px">👤</button></header>
+ <section class="home-hero"><h1>Olá, ${h(greeting)}!</h1><p>Um jeito mais simples de acompanhar a saúde e a rotina de quem faz parte da família.</p><div class="hero-actions"><button onclick="sheet({t:'pet'})">＋ Adicionar pet</button><button class="secondary" onclick="sheet({t:'ev'})">＋ Agendar cuidado</button></div></section>
+ <div class="home-stats" aria-label="Resumo da sua conta"><div class="home-stat"><span class="home-stat-icon" aria-hidden="true">🐶</span><span><strong>${ps.length}</strong><span>pets ativos</span></span></div><div class="home-stat"><span class="home-stat-icon" aria-hidden="true">📅</span><span><strong>${totalEvents}</strong><span>cuidados agendados</span></span></div></div>
+ <section><div class="home-section-title"><h2>Meus pets</h2><button class="lnk" onclick="go('pets')">Ver todos</button></div>${petCards}</section>
+ <section><div class="home-section-title"><h2>Próximos cuidados</h2><button class="lnk" onclick="go('agenda')">Abrir agenda</button></div>${pr.length?pr.map(e=>evCard(e)).join(''):'<div class="home-empty"><div class="empty-icon">✨</div><b>Tudo tranquilo por enquanto</b><p style="margin:5px 0 0">Quando você agendar um cuidado, ele aparecerá aqui.</p></div>'}</section>
+ <p class="mute" style="text-align:center;margin:18px 0 4px;font-size:12px">Patinha · Organize os cuidados. Aproveite cada momento.</p>`;
+}
 async function setEv(id,st){const e=S.events.find(e=>e.id==id);if(!e)return;const old=e.st;e.st=st;const p=pet(e.pet);try{if(p)await persistPet(p);await checkUpcomingReminders();S.msg='Status do evento salvo!';R()}catch(err){e.st=old;S.err='Não foi possível salvar o status: '+err.message;R()}}
 async function deleteEv(id){
  const e=S.events.find(x=>String(x.id)===String(id));
