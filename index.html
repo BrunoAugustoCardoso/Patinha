@@ -265,7 +265,7 @@ return `<h1>Meu perfil</h1>${S.msg?`<div class="msg">${h(S.msg)}</div>`:''}
 <div class="card row"><div class="av" style="width:64px;height:64px;font-size:28px;font-weight:800">${u.foto?`<img src="${u.foto}" alt="Sua foto">`:h(ini(u))}</div><div class="grow"><b>${h(u.nome)}</b><div class="mute">${h(u.email)}</div></div></div>
 <h2>Dados da conta</h2><div class="card">${k('Nome',u.nome)}${k('E-mail',u.email)}${k('CPF',u.cpf?'•••.'+u.cpf.slice(4,11)+'-••':'','Não informado')}${k('Telefone (opcional)',u.tel,'Não informado')}${k('Cidade ou região (opcional)',u.cidade,'Não informada')}<div style="margin-top:12px"><button class="sm s" onclick="sheet({t:'donoF'})">Editar dados</button></div></div>
 <h2>Resumo</h2><div class="card row sp"><div><b>${ps}</b><div class="mute">pets ativos</div></div><div><b>${ev}</b><div class="mute">eventos agendados</div></div><div><b>${S.ads.filter(a=>a.mine).length}</b><div class="mute">anúncios seus</div></div></div>
-${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos de cuidados</b><p class="mute">Receba avisos do navegador sobre vacinas, medicamentos, consultas e outros eventos agendados para as próximas 24 horas. Para esta primeira versão, o Patinha precisa estar aberto.</p><button class="w" onclick="enableReminders()">Ativar notificações</button><p class="mute" style="margin:8px 0 0">Você pode alterar a permissão nas configurações do navegador a qualquer momento.</p></div><h2>Privacidade</h2><div class="card"><label class="ck"><input type="checkbox" ${u.msgs!==false?'checked':''} onchange="S.user.msgs=this.checked"><span>Permitir mensagens de outras pessoas pelos meus anúncios</span></label><div class="mute">Seu e-mail, telefone e senha nunca aparecem para outros usuários. Os anúncios mostram só o animal e a região.</div></div>
+${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos de cuidados</b><p class="mute">Receba avisos do navegador sobre vacinas, medicamentos, consultas e outros eventos agendados para as próximas 24 horas. Para esta primeira versão, o Patinha precisa estar aberto.</p><button class="w" onclick="enableReminders()">Ativar notificações</button><p class="mute" style="margin:8px 0 0">Você pode alterar a permissão nas configurações do navegador a qualquer momento.</p></div><h2>Privacidade</h2><div class="card"><label class="ck"><input type="checkbox" ${u.msgs!==false?'checked':''} onchange="saveProfilePreference(this.checked)"><span>Permitir mensagens de outras pessoas pelos meus anúncios</span></label><div class="mute">Seu e-mail, telefone e senha nunca aparecem para outros usuários. Os anúncios mostram só o animal e a região.</div></div>
 <h2>Segurança</h2><button class="s w" onclick="sheet({t:'pw'})">Alterar senha</button>
 <h2>Sua conta</h2><div class="row" style="margin-bottom:10px"><button class="sm s grow" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button><button class="sm s grow" onclick="sheet({t:'doc',k:'Política de privacidade'})">Privacidade</button></div>
 <button class="s w" style="margin-bottom:10px" onclick="doLogout()">Sair</button><button class="d w" onclick="sheet({t:'acc'})">Excluir minha conta</button>`}
@@ -273,7 +273,7 @@ function donoForm(){const u=S.user;return `<h2>Editar dados</h2>${S.err?`<div cl
 async function saveDono(){
  const n=$('dn').value.trim(),e=$('de').value.trim(),tel=$('dt').value.trim(),cidade=$('dc').value.trim();
  if(!n)return S.err='Informe seu nome.',R();
- if(!/^\\S+@\\S+\\.\\S+$/.test(e))return S.err='Informe um e-mail válido.',R();
+ if(!/^\S+@\S+\.\S+$/.test(e))return S.err='Informe um e-mail válido.',R();
  if(!currentUser)return S.err='Sua sessão expirou. Entre novamente.',R();
  const oldEmail=currentUser.email,oldPhotoPath=S.user.fotoPath||null;
  try{
@@ -297,6 +297,23 @@ async function saveDono(){
   S.sheet=null;S.err='';S.msg=emailPending?'Perfil salvo. Enviamos uma confirmação para o novo e-mail; o endereço só será alterado após a confirmação.':'Perfil salvo e sincronizado com sua conta.';
   tmpFoto='';R();
  }catch(err){S.err='Não foi possível salvar o perfil: '+(err.message||'tente novamente.');R()}
+}
+async function saveProfilePreference(enabled){
+ const previous=S.user.msgs!==false;
+ S.user.msgs=enabled;
+ try{
+  const {error}=await db.auth.updateUser({data:{...(currentUser.user_metadata||{}),msgs:enabled}});
+  if(error)throw error;
+  const {data:{user},error:userError}=await db.auth.getUser();
+  if(userError)throw userError;
+  currentUser=user;
+  S.msg='Preferência de privacidade salva.';
+  R();
+ }catch(err){
+  S.user.msgs=previous;
+  S.err='Não foi possível salvar a preferência: '+(err.message||'tente novamente.');
+  R();
+ }
 }
 async function uploadProfilePhoto(dataUrl){
  const blob=await (await fetch(dataUrl)).blob();
