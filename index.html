@@ -500,7 +500,14 @@ async function deleteBusinessAd(id){
 }
 function adminBusinessArea(){
  const list=S.businessProfiles||[];
- return `<h1>Comércios cadastrados</h1><p class="mute">Visualize os estabelecimentos e acompanhe a situação de cada cadastro.</p>${list.length?list.map(b=>`<div class="card"><div class="row sp"><b>${h(b.business_name)}</b><span class="tag ${b.status==='approved'?'':b.status==='rejected'?'c':'p'}">${b.status==='approved'?'Aprovado':b.status==='rejected'?'Rejeitado':'Pendente'}</span></div><div class="mute">${h(b.category)} · ${h(b.city)}</div><p>${h(b.description||'')}</p><div class="mute">Telefone: ${h(b.phone)}</div><div class="row" style="margin-top:10px"><button class="sm" onclick="adminSetBusinessStatus('${b.user_id}','approved')">Aprovar</button><button class="sm d" onclick="adminSetBusinessStatus('${b.user_id}','rejected')">Rejeitar</button></div></div>`).join(''):'<div class="empty">Nenhum comércio cadastrado.</div>'}`;
+ return `<h1>Comércios cadastrados</h1><p class="mute">Visualize os estabelecimentos, acompanhe a situação e gerencie os planos.</p>${list.length?list.map(b=>`<div class="card"><div class="row sp"><b>${h(b.business_name)}</b><span class="tag ${b.status==='approved'?'':b.status==='rejected'?'c':'p'}">${b.status==='approved'?'Aprovado':b.status==='rejected'?'Rejeitado':'Pendente'}</span></div><div class="mute">${h(b.category)} · ${h(b.city)}</div><p>${h(b.description||'')}</p><div class="mute">Telefone: ${h(b.phone)}</div><div class="row sp" style="margin-top:10px"><label>Plano <select onchange="adminSetBusinessPlan('${b.user_id}',this.value)"><option value="commercial_free" ${(b.plan||'commercial_free')==='commercial_free'?'selected':''}>Patinha Comercial — Gratuito</option><option value="commercial_pro" ${b.plan==='commercial_pro'?'selected':''}>Patinha Pro</option></select></label>${b.status==='pending'?`<span><button class="sm" onclick="adminSetBusinessStatus('${b.user_id}','approved')">Aprovar</button> <button class="sm d" onclick="adminSetBusinessStatus('${b.user_id}','rejected')">Rejeitar</button></span>`:b.status==='rejected'?`<button class="sm" onclick="adminSetBusinessStatus('${b.user_id}','approved')">Reaprovar</button>`:''}</div></div>`).join(''):'<div class="empty">Nenhum comércio cadastrado.</div>'}`;
+}
+async function adminSetBusinessPlan(userId,plan){
+ if(!S.isAdmin||!['commercial_free','commercial_pro'].includes(plan))return;
+ const {error}=await db.from('business_profiles').update({plan}).eq('user_id',userId);
+ if(error){S.err='Não foi possível alterar o plano: '+error.message;R();return}
+ const b=S.businessProfiles.find(x=>x.user_id===userId);if(b)b.plan=plan;
+ S.msg=plan==='commercial_pro'?'Plano Patinha Pro ativado.':'Plano gratuito ativado.';R();
 }
 async function adminSetBusinessStatus(userId,status){
  if(!S.isAdmin||!['approved','rejected'].includes(status))return;
