@@ -17,6 +17,8 @@ create table if not exists public.business_ads (
 );
 alter table public.business_profiles enable row level security;
 alter table public.business_ads enable row level security;
+grant select, insert, update on public.business_profiles to authenticated;
+grant select, insert, delete on public.business_ads to authenticated;
 drop policy if exists "business_profiles_select_owner_or_admin" on public.business_profiles;
 create policy "business_profiles_select_owner_or_admin" on public.business_profiles for select to authenticated
 using (user_id=auth.uid() or (auth.jwt()->'app_metadata'->>'role')='admin');
