@@ -70,11 +70,8 @@ let currentUser=null;
 const $=id=>document.getElementById(id),h=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const day=n=>{const d=new Date();d.setDate(d.getDate()+n);d.setHours(10,0,0,0);return d.toISOString().slice(0,16)};
 const TIPOS=['Vacina','Consulta','Medicação','Vermífugo','Banho e tosa'],ESP={Cachorro:'🐶',Gato:'🐱',Outro:'🐾'};
-let S={view:'auth',mode:'login',user:null,err:'',msg:'',sheet:null,petId:null,tab:'geral',fPet:'',fTipo:'',aTipo:'',
-pets:[],events:[],ads:[
-{id:'a1',tipo:'Perdido',nome:'Thor',esp:'Cachorro',local:'Centro',desc:'Vira-lata caramelo, coleira azul. Visto pela última vez perto da praça.',mine:0},
-{id:'a2',tipo:'Adoção',nome:'Mel',esp:'Gato',local:'Bairro Palha',desc:'Gata castrada e vacinada, 2 anos, muito dócil.',mine:0},
-{id:'a3',tipo:'Adoção',nome:'Bidu',esp:'Cachorro',local:'Rio Grande',desc:'Filhote de 4 meses, porte médio, vermifugado.',mine:0}]};
+let S={view:'auth',mode:'login',user:null,err:'',msg:'',sheet:null,petId:null,tab:'geral',fPet:'',fTipo:'',
+pets:[],events:[],accountType:'tutor',business:null,businessAds:[],isAdmin:false};
 function seed(){S.fam=[{id:'f1',nome:'Rafael',email:'rafael@exemplo.com',papel:'Editor',st:'pedido'}];S.pets=[
 {id:'p1',nome:'Luna',esp:'Gato',raca:'SRD',nasc:'2021-03-10',peso:'4,2',ativo:1,alergias:[{t:'Frango',c:1}],doencas:[{t:'Rinite leve',c:0}],cuidados:[{t:'Ração hipoalergênica',c:1}],hist:[{t:'Vacina V4 aplicada',c:1},{t:'Castração',c:0}],vac:[{n:'V4 (quádrupla felina)',dose:'1ª dose',d:'2026-02-10',lote:'L2291',vet:'Dra. Camila Reis',prox:'2027-02-10',c:1},{n:'Antirrábica',dose:'Anual',d:'2025-11-20',lote:'R4410',vet:'Dra. Camila Reis',prox:'2026-11-20',c:1}]},
 {id:'p2',nome:'Bob',esp:'Cachorro',raca:'Labrador',nasc:'2019-08-21',peso:'28',ativo:1,alergias:[],doencas:[],cuidados:[{t:'Evitar exercício após refeição',c:0}],hist:[{t:'Consulta de rotina',c:1}],vac:[{n:'V10 (déctupla)',dose:'Anual',d:'2026-01-15',lote:'V8830',vet:'Dr. Paulo Mendes',prox:'2027-01-15',c:1},{n:'Gripe canina',dose:'1ª dose',d:'2026-06-02',lote:'G1207',vet:'',prox:'',c:0}]}];
@@ -95,13 +92,16 @@ function auth(){const m=S.mode,reset=m=='reset',E=S.err?'<div class="err" role="
  <form onsubmit="event.preventDefault();doAuth()">
  ${m=='signup'?'<label for="n">Nome</label><input id="n" autocomplete="name">':''}
  ${m=='signup'?'<label for="ci">Cidade</label><input id="ci" autocomplete="address-level2" placeholder="Ex.: Belo Horizonte">':''}
+ ${m=='signup'?'<label for="accountType">Tipo de acesso</label><select id="accountType" onchange="toggleMerchantFields()"><option value="tutor">Tutor de pet</option><option value="merchant">Comerciante</option></select><div id="merchantFields" style="display:none"><h2>Dados do estabelecimento</h2><label for="bn">Nome do estabelecimento</label><input id="bn"><label for="bc">Categoria</label><select id="bc"><option value="">Selecione</option><option>Pet shop</option><option>Casa de ração</option><option>Clínica veterinária</option><option>Banho e tosa</option><option>Hotel e creche</option><option>Farmácia veterinária</option><option>Adestramento</option><option>Outro</option></select><label for="bt">Telefone/WhatsApp comercial</label><input id="bt" type="tel"><label for="bd">Descrição do estabelecimento</label><textarea id="bd" rows="3"></textarea></div>':''}
  ${reset?'':'<label for="em">E-mail</label><input id="em" type="email" autocomplete="email">'}
  ${m!='forgot'?'<label for="pw">'+(reset?'Nova senha':'Senha')+'</label><input id="pw" type="password" autocomplete="'+(m=='login'?'current-password':'new-password')+'">':''}
  ${reset?'<label for="pw2">Repita a nova senha</label><input id="pw2" type="password" autocomplete="new-password">':''}
  ${m=='signup'?'<label class="ck"><input id="tm" type="checkbox"><span>Li e aceito os <button type="button" class="lnk" onclick="sheet({t:\'doc\',k:\'Termos de uso\'})">Termos de uso</button> e a <button type="button" class="lnk" onclick="sheet({t:\'doc\',k:\'Política de privacidade\'})">Política de privacidade</button>.</span></label>':''}
  <button class="w">${m=='login'?'Entrar':m=='signup'?'Criar conta':m=='reset'?'Salvar nova senha':'Enviar link de recuperação'}</button></form>
  <div class="row sp" style="margin-top:14px">${m=='login'?'<button class="lnk" onclick="go(\'auth\',{mode:\'forgot\'})">Esqueci a senha</button><button class="lnk" onclick="go(\'auth\',{mode:\'signup\'})">Criar conta</button>':'<button class="lnk" onclick="go(\'auth\',{mode:\'login\'})">Voltar para o login</button>'}</div>
- ${reset?'<p class="mute" style="margin-top:20px">Escolha uma senha com pelo menos 8 caracteres.</p>':m=='forgot'?'<p class="mute" style="margin-top:20px">Enviaremos um link para o e-mail informado, caso ele esteja cadastrado.</p>':'<p class="mute" style="margin-top:20px">Pedimos nome, cidade, e-mail e senha para criar sua conta. A cidade pode ajudar a organizar serviços e anúncios da sua região.</p>'}</div>`}function maskCpf(i){const d=i.value.replace(/\D/g,'').slice(0,11);i.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
+ ${reset?'<p class="mute" style="margin-top:20px">Escolha uma senha com pelo menos 8 caracteres.</p>':m=='forgot'?'<p class="mute" style="margin-top:20px">Enviaremos um link para o e-mail informado, caso ele esteja cadastrado.</p>':'<p class="mute" style="margin-top:20px">Escolha se sua conta será de tutor ou comerciante. Contas comerciais precisam ser aprovadas antes de acessar a divulgação.</p>'}</div>`}
+function toggleMerchantFields(){const f=$('merchantFields'),t=$('accountType');if(f&&t)f.style.display=t.value==='merchant'?'block':'none'}
+function maskCpf(i){const d=i.value.replace(/\D/g,'').slice(0,11);i.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')}
 function cpfOk(c){const d=c.replace(/\D/g,'');if(d.length!=11||/^(\d)\1+$/.test(d))return false;for(const n of[9,10]){let s=0;for(let i=0;i<n;i++)s+=d[i]*(n+1-i);if((s*10%11)%10!=d[n])return false}return true}
 async function doLogout(){
  try{
@@ -124,19 +124,69 @@ async function doLogout(){
  }
 }
 async function doAuth(){const m=S.mode;if(m=='reset')return saveRecoveredPassword();const em=$('em').value.trim();
-if(!/^\S+@\S+\.\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
+if(!/^\\S+@\\S+\\.\\S+$/.test(em))return S.err='Informe um e-mail válido.',R();
 if(m=='forgot'){try{const {error}=await db.auth.resetPasswordForEmail(em,{redirectTo:'https://brunoaugustocardoso.github.io/Patinha/'});if(error)throw error;S.err='';S.msg='Se o e-mail estiver cadastrado, enviaremos um link para criar nova senha.';R()}catch(e){S.err=e.message||'Não foi possível enviar o link. Tente novamente.';S.msg='';R()}return}
 const pw=$('pw').value;if(pw.length<8)return S.err='A senha precisa ter ao menos 8 caracteres.',R();
-let nome=em.split('@')[0],cid='';
-if(m=='signup'){nome=$('n').value.trim();if(!nome)return S.err='Informe seu nome.',R();cid=$('ci').value.trim();if(!cid)return S.err='Informe sua cidade.',R();if(!$('tm').checked)return S.err='Para criar a conta, aceite os termos e a política de privacidade.',R()}
-try{if(m=='signup'){const {data,error}=await db.auth.signUp({email:em,password:pw,options:{data:{nome,cidade:cid}}});if(error)throw error;if(!data.session){S.msg='Conta criada! Confira seu e-mail para confirmar o cadastro e depois entre no Patinha.';return R()}currentUser=data.user;}else{const {data,error}=await db.auth.signInWithPassword({email:em,password:pw});if(error)throw error;currentUser=data.user;}await openUserData();}catch(e){S.err=e.message||'Não foi possível entrar. Confira seus dados.';R()}}
+let nome=em.split('@')[0],cid='',tipo='tutor',comercio=null;
+if(m=='signup'){
+ nome=$('n').value.trim();if(!nome)return S.err='Informe seu nome.',R();
+ cid=$('ci').value.trim();if(!cid)return S.err='Informe sua cidade.',R();
+ tipo=$('accountType').value;
+ if(tipo==='merchant'){
+  const nomeEst=$('bn').value.trim(),categoria=$('bc').value,telefone=$('bt').value.trim(),descricao=$('bd').value.trim();
+  if(!nomeEst||!categoria||!telefone)return S.err='Para solicitar acesso comercial, informe estabelecimento, categoria e telefone.',R();
+  comercio={business_name:nomeEst,category:categoria,phone:telefone,city:cid,description:descricao};
+ }
+ if(!$('tm').checked)return S.err='Para criar a conta, aceite os termos e a política de privacidade.',R();
+}
+try{
+ if(m=='signup'){
+  const metadata={nome,cidade:cid,account_type:tipo};
+  if(comercio)metadata.business_application=comercio;
+  const {data,error}=await db.auth.signUp({email:em,password:pw,options:{data:metadata}});
+  if(error)throw error;
+  if(!data.session){S.msg=tipo==='merchant'?'Conta criada. Confirme seu e-mail e entre novamente para enviar sua solicitação comercial.':'Conta criada! Confira seu e-mail para confirmar o cadastro e depois entre no Patinha.';return R()}
+  currentUser=data.user;
+ }else{
+  const {data,error}=await db.auth.signInWithPassword({email:em,password:pw});
+  if(error)throw error;currentUser=data.user;
+ }
+ await openUserData();
+}catch(e){S.err=e.message||'Não foi possível entrar. Confira seus dados.';R()}}
 async function saveRecoveredPassword(){const pw=$('pw').value,pw2=$('pw2').value;if(pw.length<8)return S.err='A nova senha precisa ter ao menos 8 caracteres.',R();if(pw!==pw2)return S.err='As senhas não coincidem.',R();try{const {error}=await db.auth.updateUser({password:pw});if(error)throw error;try{await db.auth.signOut()}catch(_){}currentUser=null;S.user=null;S.pets=[];S.events=[];S.fam=[];S.view='auth';S.mode='login';S.err='';S.msg='Senha alterada com sucesso. Entre com sua nova senha.';R()}catch(e){S.err=e.message||'Não foi possível alterar a senha. Solicite um novo link.';R()}}
 async function openUserData(){
- const {data:{user},error}=await db.auth.getUser(); if(error)throw error; currentUser=user;
- const meta=user.user_metadata||{}; S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:meta.tel||'',cidade:meta.cidade||'',foto:'',fotoPath:meta.fotoPath||'',msgs:meta.msgs!==false};
+ const {data:{user},error}=await db.auth.getUser();if(error)throw error;currentUser=user;
+ const meta=user.user_metadata||{},tipo=meta.account_type==='merchant'?'merchant':'tutor';
+ S.isAdmin=user.app_metadata?.role==='admin';S.accountType=tipo;
+ S.user={nome:meta.nome||user.email.split('@')[0],email:user.email,tel:meta.tel||'',cidade:meta.cidade||'',foto:'',fotoPath:meta.fotoPath||'',msgs:meta.msgs!==false};
  if(S.user.fotoPath){try{S.user.foto=await signedPetPhoto(S.user.fotoPath)}catch(e){console.warn('Foto do perfil não carregada:',e.message)}}
- const {data,error:readError}=await db.from('pets').select('local_id,app_data').eq('user_id',user.id); if(readError)throw readError;
- S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id})); await Promise.all(S.pets.map(async p=>{if(p.fotoPath){try{p.foto=await signedPetPhoto(p.fotoPath)}catch(e){console.warn('Foto não carregada:',e.message)}}})); S.events=S.pets.flatMap(p=>p.eventos||[]); S.fam=[]; S.view='home'; S.mode='login'; S.err=''; S.msg=''; R(); checkUpcomingReminders();
+ S.pets=[];S.events=[];S.fam=[];S.business=null;S.businessAds=[];
+ if(tipo==='merchant'&&!S.isAdmin){
+  let {data:business,error:businessError}=await db.from('business_profiles').select('*').eq('user_id',user.id).maybeSingle();
+  if(businessError)throw new Error('Não foi possível consultar sua solicitação comercial. Verifique se a configuração comercial do Supabase foi aplicada. '+businessError.message);
+  if(!business){
+   const application=meta.business_application||{};
+   if(!application.business_name)throw new Error('Sua conta está marcada como comerciante, mas faltam os dados da solicitação. Entre em contato com o suporte.');
+   const {data:created,error:createError}=await db.from('business_profiles').insert({user_id:user.id,...application,status:'pending'}).select('*').single();
+   if(createError)throw new Error('Não foi possível enviar sua solicitação comercial. '+createError.message);
+   business=created;
+  }
+  S.business=business;
+  if(business.status==='approved'){
+   const {data:ads,error:adsError}=await db.from('business_ads').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+   if(adsError)throw new Error('Não foi possível carregar suas divulgações. '+adsError.message);
+   S.businessAds=ads||[];
+  }
+  S.view='comercio';
+ }else if(S.isAdmin){
+  S.view='admin';
+ }else{
+  const {data,error:readError}=await db.from('pets').select('local_id,app_data').eq('user_id',user.id);if(readError)throw readError;
+  S.pets=(data||[]).map(row=>({...row.app_data,id:row.local_id}));
+  await Promise.all(S.pets.map(async p=>{if(p.fotoPath){try{p.foto=await signedPetPhoto(p.fotoPath)}catch(e){console.warn('Foto não carregada:',e.message)}}}));
+  S.events=S.pets.flatMap(p=>p.eventos||[]);S.view='home';
+ }
+ S.mode='login';S.err='';S.msg='';R();if(tipo==='tutor')checkUpcomingReminders();
 }
 async function signedPetPhoto(path){const {data,error}=await db.storage.from('fotos-pets').createSignedUrl(path,3600);if(error)throw error;return data.signedUrl}
 async function uploadPetPhoto(dataUrl,p){const blob=await (await fetch(dataUrl)).blob();const path=currentUser.id+'/'+String(p.id)+'.jpg';const {error}=await db.storage.from('fotos-pets').upload(path,blob,{contentType:'image/jpeg',upsert:true,cacheControl:'3600'});if(error)throw error;return path}
@@ -268,28 +318,13 @@ return `<h2>Agendar cuidado</h2>${S.err?`<div class="err">${S.err}</div>`:''}<fo
 async function saveEv(){const t=$('ei').value.trim()||$('et').value,d=$('ed').value;if(!d)return S.err='Informe a data e a hora.',R();
 const e={id:uid(),pet:$('ep').value,tipo:$('et').value,tit:t,dt:d,st:'agendado'};const p=pet(e.pet);if(!p)return S.err='Pet não encontrado. Tente novamente.',R();S.err='';S.events.push(e);try{await persistPet(p);S.sheet=null;S.msg='Evento salvo no calendário!';R();checkUpcomingReminders()}catch(err){S.events=S.events.filter(x=>x.id!==e.id);S.err='Não foi possível salvar o evento: '+err.message;R()}}
 
-/* Tela 6 */
-function anuncios(){const l=S.ads.filter(a=>!S.aTipo||a.tipo==S.aTipo);
-return `<div class="row sp"><h1>Anúncios</h1><button class="sm" onclick="sheet({t:'ad'})">+ Anunciar</button></div>
-<div class="chips">${['','Perdido','Adoção'].map(v=>`<button class="chip ${S.aTipo==v?'on':''}" onclick="S.aTipo='${v}';R()">${v||'Todos'}</button>`).join('')}</div>
-<p class="mute">Anúncios mostram só dados do animal e região. O contato acontece pelo app, sem expor seu e-mail.</p>
-${l.length?l.map(a=>`<div class="card"><div class="row"><div class="av">${ESP[a.esp]}</div><div class="grow"><b>${h(a.nome)}</b><div class="mute">${a.esp} · ${h(a.local)}</div></div><span class="tag ${a.tipo=='Perdido'?'c':''}">${a.tipo}</span></div>${a.foto?`<img class="big" style="margin-top:10px" src="${a.foto}" alt="Foto de ${h(a.nome)}">`:''}<p>${h(a.desc)}</p>${a.mine?`<button class="sm d" onclick="S.ads=S.ads.filter(x=>x.id!='${a.id}');R()">Remover meu anúncio</button>`:`<button class="sm" onclick="sheet({t:'msg',id:'${a.id}'})">Enviar mensagem</button>`}</div>`).join(''):'<div class="empty">Nenhum anúncio nesta categoria.</div>'}`}
-function adForm(){return `<h2>Novo anúncio</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveAd()">${photoField()}<p class="mute" style="margin:-6px 0 12px">Use uma foto só do animal, sem pessoas ou placas de endereço.</p>
-<label for="at">Tipo</label><select id="at"><option>Perdido</option><option>Adoção</option></select>
-<label for="an">Nome do animal</label><input id="an"><label for="ae">Espécie</label><select id="ae">${Object.keys(ESP).map(k=>`<option>${k}</option>`).join('')}</select>
-<label for="al">Bairro ou região</label><input id="al" placeholder="Evite endereço exato"><label for="ad">Descrição</label><textarea id="ad" rows="3"></textarea><button class="w">Publicar anúncio</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
-function saveAd(){const n=$('an').value.trim(),l=$('al').value.trim();if(!n||!l)return S.err='Informe o nome e a região.',R();
-S.ads.unshift({id:uid(),foto:tmpFoto,tipo:$('at').value,nome:n,esp:$('ae').value,local:l,desc:$('ad').value.trim(),mine:1});S.sheet=null;tmpFoto='';R()}
-const msgSheet=()=>`<h2>Mensagem ao anunciante</h2><p class="mute">No app real, a conversa fica dentro do Patinha e o anunciante só vê seu primeiro nome.</p><textarea rows="3" aria-label="Mensagem"></textarea><button class="w" onclick="sheet(null)">Enviar</button><button class="w g" onclick="sheet(null)">Cancelar</button>`;
-
 const ini=u=>(u.nome||'?').trim()[0].toUpperCase();
 function dono(){const u=S.user,ps=S.pets.filter(p=>p.ativo).length,ev=prox().length,k=(l,v,f)=>`<div class="mute" style="margin-top:8px">${l}</div>${v?h(v):f}`;
 return `<h1>Meu perfil</h1>${S.msg?`<div class="msg">${h(S.msg)}</div>`:''}
 <div class="card row"><div class="av" style="width:64px;height:64px;font-size:28px;font-weight:800">${u.foto?`<img src="${u.foto}" alt="Sua foto">`:h(ini(u))}</div><div class="grow"><b>${h(u.nome)}</b><div class="mute">${h(u.email)}</div></div></div>
 <h2>Dados da conta</h2><div class="card">${k('Nome',u.nome)}${k('E-mail',u.email)}${k('CPF',u.cpf?'•••.'+u.cpf.slice(4,11)+'-••':'','Não informado')}${k('Telefone (opcional)',u.tel,'Não informado')}${k('Cidade ou região (opcional)',u.cidade,'Não informada')}<div style="margin-top:12px"><button class="sm s" onclick="sheet({t:'donoF'})">Editar dados</button></div></div>
-<h2>Resumo</h2><div class="card row sp"><div><b>${ps}</b><div class="mute">pets ativos</div></div><div><b>${ev}</b><div class="mute">eventos agendados</div></div><div><b>${S.ads.filter(a=>a.mine).length}</b><div class="mute">anúncios seus</div></div></div>
-${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos de cuidados</b><p class="mute">Receba avisos do navegador sobre vacinas, medicamentos, consultas e outros eventos agendados para as próximas 24 horas. Para esta primeira versão, o Patinha precisa estar aberto.</p><button class="w" onclick="enableReminders()">Ativar notificações</button><p class="mute" style="margin:8px 0 0">Você pode alterar a permissão nas configurações do navegador a qualquer momento.</p></div><h2>Privacidade</h2><div class="card"><label class="ck"><input type="checkbox" ${u.msgs!==false?'checked':''} onchange="saveProfilePreference(this.checked)"><span>Permitir mensagens de outras pessoas pelos meus anúncios</span></label><div class="mute">Seu e-mail, telefone e senha nunca aparecem para outros usuários. Os anúncios mostram só o animal e a região.</div></div>
-<h2>Segurança</h2><button class="s w" onclick="sheet({t:'pw'})">Alterar senha</button>
+<h2>Resumo</h2><div class="card row sp"><div><b>${ps}</b><div class="mute">pets ativos</div></div><div><b>${ev}</b><div class="mute">eventos agendados</div></div></div>
+${famSec()}<h2>Notificações e lembretes</h2><div class="card"><b>🔔 Avisos de cuidados</b><p class="mute">Receba avisos do navegador sobre vacinas, medicamentos, consultas e outros eventos agendados para as próximas 24 horas. Para esta primeira versão, o Patinha precisa estar aberto.</p><button class="w" onclick="enableReminders()">Ativar notificações</button><p class="mute" style="margin:8px 0 0">Você pode alterar a permissão nas configurações do navegador a qualquer momento.</p></div><h2>Segurança</h2><button class="s w" onclick="sheet({t:'pw'})">Alterar senha</button>
 <h2>Sua conta</h2><div class="row" style="margin-bottom:10px"><button class="sm s grow" onclick="sheet({t:'doc',k:'Termos de uso'})">Termos de uso</button><button class="sm s grow" onclick="sheet({t:'doc',k:'Política de privacidade'})">Privacidade</button></div>
 <button class="s w" style="margin-bottom:10px" onclick="doLogout()">Sair</button><button class="d w" onclick="sheet({t:'acc'})">Excluir minha conta</button>`}
 function donoForm(){const u=S.user;return `<h2>Editar dados</h2>${S.err?`<div class="err">${S.err}</div>`:''}<form onsubmit="event.preventDefault();saveDono()">${photoField()}<label for="dn">Nome</label><input id="dn" value="${h(u.nome)}" autocomplete="name"><label for="de">E-mail</label><input id="de" type="email" value="${h(u.email)}" autocomplete="email"><label for="dt">Telefone (opcional)</label><input id="dt" type="tel" value="${h(u.tel)}" autocomplete="tel"><label for="dc">Cidade ou região (opcional)</label><input id="dc" value="${h(u.cidade)}"><button class="w">Salvar dados</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
@@ -390,14 +425,6 @@ return `<div class='vc'><div class='vh'><span>💉 Cartão de vacinação</span>
 function vacForm(){const p=pet(S.petId),L=p.esp=='Gato'?['V3 (tríplice felina)','V4 (quádrupla felina)','V5 (quíntupla felina)','Antirrábica','FeLV']:['V8 (óctupla)','V10 (déctupla)','Antirrábica','Gripe canina','Giárdia','Leishmaniose'];
 return `<h2>Registrar vacina</h2>${scanBox()}<p class='mute' style='margin-top:14px'>Ou preencha manualmente:</p>${S.err?`<div class='err'>${S.err}</div>`:''}<form onsubmit='event.preventDefault();saveVac()'><label for='vn'>Vacina</label><input id='vn' list='vl' placeholder='Escolha ou digite'><datalist id='vl'>${L.map(x=>`<option value='${x}'>`).join('')}</datalist><label for='vo'>Dose</label><select id='vo'>${['1ª dose','2ª dose','3ª dose','Reforço','Anual'].map(x=>`<option>${x}</option>`).join('')}</select><label for='vd'>Data de aplicação</label><input id='vd' type='date' value='${new Date().toISOString().slice(0,10)}'><label for='vt'>Lote (opcional)</label><input id='vt'><label for='vv'>Veterinário (opcional)</label><input id='vv'><label for='vp'>Próxima dose (opcional)</label><input id='vp' type='date'><button class='w'>Salvar no cartão</button></form><button class='w g' onclick='sheet(null)'>Cancelar</button>`}
 function saveVac(){const n=$('vn').value.trim(),d=$('vd').value,x=$('vp').value;if(!n||!d)return S.err='Informe a vacina e a data de aplicação.',R();const p=pet(S.petId);(p.vac=p.vac||[]).push({n,dose:$('vo').value,d,lote:$('vt').value.trim(),vet:$('vv').value.trim(),prox:x,c:0});if(x)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+n,dt:x+'T10:00',st:'agendado'});S.sheet=null;persistPet(p).catch(e=>{S.err='Falha ao sincronizar: '+e.message;R()});R()}
-const CATS=['Pet shop','Casa de ração','Veterinário','Banho e tosa','Hotel e creche','Farmácia vet.'],CI={'Pet shop':'🛍️','Casa de ração':'🌾','Veterinário':'🩺','Banho e tosa':'🛁','Hotel e creche':'🏨','Farmácia vet.':'💊'};
-const SH=[{n:'Pet Shop Cantinho Feliz',c:'Pet shop',b:'Centro',h:'Seg a sáb, 8h às 18h',s:'Acessórios, brinquedos, petiscos e roupinhas',fav:0},{n:'Casa de Ração Boa Safra',c:'Casa de ração',b:'Zona norte',h:'Seg a sáb, 7h às 18h',s:'Rações a granel e embaladas, areia higiênica, entrega local',fav:0},{n:'Clínica Veterinária Vida Animal',c:'Veterinário',b:'Centro',h:'Plantão 24 horas',s:'Consultas, vacinas, exames e cirurgias',u:1,fav:0},{n:'Pelo Macio Banho e Tosa',c:'Banho e tosa',b:'Zona sul',h:'Ter a sáb, 9h às 17h',s:'Banho, tosa higiênica e hidratação, com leva e traz',fav:0},{n:'Hotelzinho Patas Felizes',c:'Hotel e creche',b:'Bairro Jardim',h:'Todos os dias, 7h às 19h',s:'Hospedagem e creche diária',fav:0},{n:'Vet Saúde Farmácia',c:'Farmácia vet.',b:'Centro',h:'Seg a sex, 8h às 18h',s:'Medicamentos, antiparasitários e suplementos',fav:0}];
-let sF=0;const setF=j=>{sF=j;R()},fav=i=>{SH[i].fav=SH[i].fav?0:1;R()},det=i=>sheet({t:'shopd',i});
-function lojas(){const L=['','★',...CATS],f=L[sF],cid=S.user.cidade;
-return `<div class='row sp'><h1>Comércios</h1><button class='sm' onclick='openShop()'>+ Indicar</button></div><p class='mute'>${cid?'Região: '+h(cid)+'. ':'Informe sua cidade em Perfil para filtrar por região. '}Os locais abaixo são exemplos fictícios do protótipo.</p><div class='chips'>${L.map((v,j)=>`<button class='chip ${sF==j?'on':''}' onclick='setF(${j})'>${j==0?'Todos':j==1?'★ Favoritos':v}</button>`).join('')}</div>${SH.map((x,i)=>(!f||(f=='★'?x.fav:x.c==f))?`<div class='card'><div class='row'><div class='av'>${CI[x.c]}</div><div class='grow'><b>${h(x.n)}</b><div class='mute'>${h(x.b)} · ${h(x.h)}</div></div><button class='g' aria-label='Favoritar' onclick='fav(${i})' style='font-size:24px;color:var(--sun)'>${x.fav?'★':'☆'}</button></div><div style='margin:8px 0'><span class='tag ${x.pend?'p':''}'>${x.pend?'Em análise':x.c}</span> ${x.u?`<span class='tag c'>Plantão</span>`:''}</div><div class='mute'>${h(x.s)}</div><button class='sm s' style='margin-top:10px' onclick='det(${i})'>Ver detalhes</button></div>`:'').join('')||`<div class='empty'>Nenhum comércio nesta categoria.</div>`}`}
-function shopDet(){const x=SH[S.sheet.i],r=(l,v)=>`<div class='mute' style='margin-top:8px'>${l}</div>${h(v)}`;return `<h2>${CI[x.c]} ${h(x.n)}</h2><div class='card'>${r('Categoria',x.c)}${r('Região',x.b+(S.user.cidade?', '+S.user.cidade:''))}${r('Horário',x.h)}${r('Serviços',x.s)}</div><p class='mute'>No app real, aqui entram endereço completo, telefone, WhatsApp e rota no mapa.</p><button class='w' onclick='sheet(null)'>Fechar</button>`}
-function shopForm(){return `<h2>Indicar comércio</h2>${S.err?`<div class='err'>${S.err}</div>`:''}<form onsubmit='event.preventDefault();saveShop()'><label for='sn'>Nome</label><input id='sn'><label for='sc'>Categoria</label><select id='sc'>${CATS.map(c=>`<option>${c}</option>`).join('')}</select><label for='sb'>Bairro ou região</label><input id='sb'><label for='sh'>Horário (opcional)</label><input id='sh'><label for='ss'>Serviços (opcional)</label><input id='ss'><button class='w'>Enviar indicação</button></form><p class='mute'>A indicação fica em análise até ser verificada.</p><button class='w g' onclick='sheet(null)'>Cancelar</button>`}
-function saveShop(){const n=$('sn').value.trim(),b=$('sb').value.trim();if(!n||!b)return S.err='Informe o nome e a região.',R();SH.push({n,c:$('sc').value,b,h:$('sh').value.trim()||'Horário não informado',s:$('ss').value.trim()||'—',fav:0,pend:1});S.sheet=null;R()}
 const openInv=()=>sheet({t:'inv'}),famOk=i=>sheet({t:'famP',i}),famDel=i=>{S.fam.splice(i,1);R()},famAcc=i=>{const m=S.fam[i];m.st='ativo';m.nome=m.nome||m.email.split('@')[0];R()};
 function famSec(){const F=S.fam||[],pd=F.filter(m=>m.st=='pedido'),rest=F.filter(m=>m.st!='pedido');
 return `<h2>Família e acesso compartilhado</h2><div class='card'><div class='row sp'><b>${h(S.user.nome)}</b><span class='tag'>Responsável principal</span></div><p class='mute'>Você decide quem acessa os pets. Só quem você autorizar vê os dados, e você pode remover o acesso quando quiser.</p>${pd.map(m=>`<div class='card' style='border-color:var(--sun)'><b>${h(m.nome)}</b> pediu acesso<div class='mute'>${h(m.email)}</div><div class='row' style='margin-top:8px'><button class='sm' onclick='famOk(${F.indexOf(m)})'>Autorizar</button><button class='sm d' onclick='famDel(${F.indexOf(m)})'>Recusar</button></div></div>`).join('')}${rest.map(m=>`<div class='row sp' style='padding:8px 0;border-top:1px dashed var(--line)'><div class='grow'><b>${h(m.nome||m.email)}</b><div class='mute'>${h(m.email)}</div><span class='tag ${m.st=='ativo'?'':'p'}'>${m.st=='ativo'?'Acesso ativo':'Convite enviado'}</span> <span class='tag'>${m.papel}</span></div><div style='display:grid;gap:6px'>${m.st=='ativo'?`<button class='sm s' onclick='famOk(${F.indexOf(m)})'>Alterar permissão</button>`:`<button class='sm s' onclick='famAcc(${F.indexOf(m)})'>Simular aceite</button>`}<button class='sm g' onclick='famDel(${F.indexOf(m)})'>Remover</button></div></div>`).join('')}<button class='w' style='margin-top:10px' onclick='openInv()'>+ Convidar pessoa</button></div><div class='card mute' style='font-size:14px'><b style='color:var(--ink)'>O que cada permissão faz</b><br>Visualizador: vê pets, vacinas e agenda.<br>Editor: também registra vacinas, saúde e eventos.<br>Só o responsável principal exclui pets, gerencia pessoas e altera a conta.</div>`}
@@ -418,11 +445,56 @@ function scanBox(){const bt=(l,cap)=>`<label class='chip' style='cursor:pointer;
 let b='';if(scan.st=='load')b=`<p class='mute'>Lendo o cartão… pode levar alguns segundos.</p>`;else if(scan.st=='err'&&scan.msg)b=`<div class='err'>${scan.msg}</div>`;else if(scan.st=='ok')b=scan.recs.length?`<p><b>${scan.recs.length} registro${scan.recs.length>1?'s':''} encontrado${scan.recs.length>1?'s':''}.</b> Confira com o cartão e desmarque o que não quiser.</p>${scan.recs.map((x,i)=>`<label class='ck'><input type='checkbox' ${x.on?'checked':''} onchange='scan.recs[${i}].on=this.checked'><span><b>${h(x.n)}</b> · ${h(x.dose)||'dose não lida'} · ${fd(x.d)}<br><span class='mute'>Lote ${h(x.lote)||'—'} · ${h(x.vet)||'vet. não lido'} · Próxima: ${fd(x.prox)}</span></span></label>`).join('')}<button class='w' onclick='addScan()'>Adicionar selecionadas ao cartão</button><p class='mute'>A leitura pode errar. Os registros entram como "Precisa confirmar".</p>`:`<div class='err'>Não encontrei vacinas nessa foto. Tente uma imagem mais nítida e bem iluminada.</div>`;
 return `<div class='card' style='border-color:var(--acc)'><b>📷 Preencher com foto do cartão</b><p class='mute'>Tire uma foto ou escolha da galeria. Lemos os dados automaticamente e você confere antes de salvar. A foto não fica guardada.</p>${bt('Tirar foto',1)}${bt('Escolher da galeria',0)}${b}</div>`}
 function addScan(){const p=pet(S.petId),hoje=new Date().toISOString().slice(0,10);(p.vac=p.vac||[]);scan.recs.filter(x=>x.on).forEach(x=>{p.vac.push({n:x.n,dose:x.dose,d:x.d,lote:x.lote,vet:x.vet,prox:x.prox,c:0});if(x.prox&&x.prox>=hoje)S.events.push({id:uid(),pet:p.id,tipo:'Vacina',tit:'Reforço: '+x.n,dt:x.prox+'T10:00',st:'agendado'})});scan={st:'',recs:[],msg:''};S.sheet=null;persistPet(p).catch(e=>{S.err='Falha ao sincronizar: '+e.message;R()});R()}
-function nav(){const t=[['home','🏠','Início'],['pets','🐕','Pets'],['agenda','📅','Agenda'],['anuncios','📣','Anúncios']],cur=S.view=='perfil'?'pets':S.view;
-return `<nav><div>${t.concat([['lojas','🏪','Comércios'],['dono','👤','Perfil']]).map(([k,i,l])=>`<button class="${cur==k?'on':''}" onclick="go('${k}')"><b>${i}</b>${l}</button>`).join('')}</div></nav>`}
-function R(){const V={auth,home,pets,perfil,agenda,anuncios,dono,lojas};let o='';
-if(S.sheet){const t=S.sheet.t;o=`<div class="ov" onclick="if(event.target==this)sheet(null)"><div class="sh">${{doc:docSheet,pet:petForm,del:delSheet,ev:evForm,ad:adForm,msg:msgSheet,donoF:donoForm,pw:pwForm,acc:accSheet,vac:vacForm,shop:shopForm,shopd:shopDet,famP:famPForm,inv:invForm}[t]()}</div></div>`}
-$('app').innerHTML=V[S.view]()+(S.view!='auth'?nav():'')+o;window.scrollTo(0,0)}
+function nav(){
+ const tutor=[['home','🏠','Início'],['pets','🐕','Pets'],['agenda','📅','Agenda'],['dono','👤','Perfil']];
+ const merchant=[['comercio','🏪','Meu comércio'],['dono','👤','Perfil']];
+ const admin=[['admin','🛡️','Aprovações'],['dono','👤','Perfil']];
+ const t=S.isAdmin?admin:S.accountType==='merchant'?merchant:tutor,cur=S.view==='perfil'?'pets':S.view;
+ return `<nav><div>${t.map(([k,i,l])=>`<button class="${cur==k?'on':''}" onclick="go('${k}')"><b>${i}</b>${l}</button>`).join('')}</div></nav>`
+}
+function businessArea(){
+ const b=S.business;
+ if(!b)return `<h1>Área do comerciante</h1><div class="err">Não encontramos uma solicitação comercial para esta conta.</div>`;
+ if(b.status==='pending')return `<h1>Solicitação em análise</h1><div class="card"><div style="font-size:36px">⏳</div><b>${h(b.business_name)}</b><p class="mute">Sua solicitação foi recebida e está aguardando aprovação da equipe Patinha. A área de divulgação será liberada após a aprovação.</p><span class="tag p">Em análise</span></div><button class="s w" onclick="doLogout()">Sair</button>`;
+ if(b.status==='rejected')return `<h1>Solicitação não aprovada</h1><div class="card"><b>${h(b.business_name)}</b><p class="mute">Sua solicitação não foi aprovada. Entre em contato com a equipe Patinha para saber como regularizar o cadastro.</p><span class="tag c">Não aprovada</span></div>`;
+ if(b.status!=='approved')return `<h1>Área do comerciante</h1><div class="err">Status comercial inválido. Entre em contato com o suporte.</div>`;
+ return `<div class="row sp"><h1>Meu comércio</h1><span class="tag">Aprovado</span></div>
+ <div class="card"><b>${h(b.business_name)}</b><div class="mute">${h(b.category)} · ${h(b.city)}</div><p>${h(b.description||'')}</p><div class="mute">Contato: ${h(b.phone)}</div></div>
+ <div class="row sp"><h2>Minhas divulgações</h2><button class="sm" onclick="openBusinessAdForm()">+ Nova divulgação</button></div>
+ ${S.businessAds.length?S.businessAds.map(ad=>`<div class="card"><b>${h(ad.title)}</b><div class="tag">${h(ad.category)}</div><p>${h(ad.description)}</p><button class="sm d" onclick="deleteBusinessAd('${ad.id}')">Excluir</button></div>`).join(''):'<div class="empty">Você ainda não publicou divulgações.</div>'}`;
+}
+function openBusinessAdForm(){S.sheet={t:'businessAd'};S.err='';R()}
+function businessAdForm(){return `<h2>Nova divulgação</h2>${S.err?`<div class="err">${h(S.err)}</div>`:''}<form onsubmit="event.preventDefault();saveBusinessAd()"><label for="bat">Título</label><input id="bat" maxlength="100" required><label for="bac">Categoria</label><select id="bac"><option>Produto</option><option>Serviço</option><option>Promoção</option><option>Evento</option></select><label for="bad">Descrição</label><textarea id="bad" rows="4" maxlength="1000" required></textarea><button class="w">Salvar divulgação</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+async function saveBusinessAd(){
+ const title=$('bat').value.trim(),category=$('bac').value,description=$('bad').value.trim();
+ if(!title||!description)return S.err='Informe o título e a descrição.',R();
+ if(!S.business||S.business.status!=='approved')return S.err='Sua conta comercial ainda não está aprovada.',R();
+ try{const {data,error}=await db.from('business_ads').insert({user_id:currentUser.id,title,category,description}).select('*').single();if(error)throw error;S.businessAds.unshift(data);S.sheet=null;S.err='';S.msg='Divulgação salva com sucesso.';R()}
+ catch(e){S.err='Não foi possível salvar a divulgação: '+(e.message||'tente novamente.');R()}
+}
+async function deleteBusinessAd(id){
+ if(!confirm('Excluir esta divulgação?'))return;
+ const {error}=await db.from('business_ads').delete().eq('id',id).eq('user_id',currentUser.id);
+ if(error){S.err='Não foi possível excluir: '+error.message;R();return}
+ S.businessAds=S.businessAds.filter(ad=>ad.id!==id);S.msg='Divulgação excluída.';R();
+}
+async function adminArea(){
+ const {data,error}=await db.from('business_profiles').select('*').eq('status','pending').order('created_at',{ascending:true});
+ if(error)return `<h1>Aprovações</h1><div class="err">Não foi possível carregar solicitações: ${h(error.message)}</div>`;
+ return `<h1>Solicitações comerciais</h1><p class="mute">Confira os dados antes de aprovar. Somente o administrador pode liberar a divulgação.</p>
+ ${data?.length?data.map(b=>`<div class="card"><b>${h(b.business_name)}</b><div class="mute">${h(b.category)} · ${h(b.city)}</div><p>${h(b.description||'')}</p><div class="mute">Telefone: ${h(b.phone)}</div><div class="row"><button class="sm" onclick="setBusinessStatus('${b.user_id}','approved')">Aprovar</button><button class="sm d" onclick="setBusinessStatus('${b.user_id}','rejected')">Rejeitar</button></div></div>`).join(''):'<div class="empty">Não há solicitações pendentes.</div>'}`;
+}
+async function setBusinessStatus(userId,status){
+ if(!S.isAdmin||!['approved','rejected'].includes(status))return;
+ const {error}=await db.from('business_profiles').update({status}).eq('user_id',userId);
+ if(error){S.err='Não foi possível atualizar a solicitação: '+error.message;R();return}
+ S.msg=status==='approved'?'Comerciante aprovado.':'Solicitação rejeitada.';R();
+}
+function R(){const V={auth,home,pets,perfil,agenda,dono,comercio:businessArea,admin:()=>'<div id="adminContent"></div>'};let o='';
+ if(S.sheet){const t=S.sheet.t;o=`<div class="ov" onclick="if(event.target==this)sheet(null)"><div class="sh">${{doc:docSheet,pet:petForm,del:delSheet,ev:evForm,donoF:donoForm,pw:pwForm,acc:accSheet,vac:vacForm,businessAd:businessAdForm,famP:famPForm,inv:invForm}[t]()}</div></div>`}
+ $('app').innerHTML=V[S.view]()+(S.view!=='auth'?nav():'')+o;window.scrollTo(0,0);
+ if(S.view==='admin')adminArea().then(html=>{const el=$('adminContent');if(el)el.innerHTML=html});
+}
 db.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){S.view='auth';S.mode='reset';S.err='';S.msg='';S.sheet=null;R()}});
 boot();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").then(()=>checkUpcomingReminders()).catch(console.error));}
