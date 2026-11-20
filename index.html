@@ -488,21 +488,6 @@ async function saveCommunityPost(){
   S.communityPosts.unshift(data);S.sheet=null;tmpFoto='';S.msg='Publicação publicada com sucesso!';R();
  }catch(e){S.err='Não foi possível publicar: '+(e.message||'tente novamente.');R()}
 }
-/* A comunidade não usa aprovação prévia nem moderação nesta versão. */
-async function moderateCommunityPost(id,status){
- if(!S.isAdmin||!['approved','rejected'].includes(status))return;
- const {error}=await db.from('community_posts').update({status}).eq('id',id);
- if(error){S.err='Não foi possível moderar a publicação: '+error.message;R();return}
- const post=S.communityPosts.find(p=>p.id===id);if(post)post.status=status;
- S.msg=status==='approved'?'Publicação aprovada.':'Publicação rejeitada.';R();
-}
-async function deleteCommunityPost(id){
- if(!confirm('Excluir esta publicação?'))return;
- const {error}=await db.from('community_posts').delete().eq('id',id);
- if(error){S.err='Não foi possível excluir: '+error.message;R();return}
- S.communityPosts=S.communityPosts.filter(p=>p.id!==id);S.msg='Publicação excluída.';R();
-}
-
 function planos(){
  const showTutor=S.accountType!=='merchant'||S.isAdmin;
  const showCommercial=S.accountType==='merchant'||S.isAdmin;
