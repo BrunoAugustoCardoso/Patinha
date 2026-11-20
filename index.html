@@ -475,17 +475,20 @@ function businessArea(){
  if(b.status==='pending')return `<h1>Solicitação em análise</h1><div class="card"><div style="font-size:36px">⏳</div><b>${h(b.business_name)}</b><p class="mute">Sua solicitação foi recebida e está aguardando aprovação da equipe Patinha. A área de divulgação será liberada após a aprovação.</p><span class="tag p">Em análise</span></div><button class="s w" onclick="doLogout()">Sair</button>`;
  if(b.status==='rejected')return `<h1>Solicitação não aprovada</h1><div class="card"><b>${h(b.business_name)}</b><p class="mute">Sua solicitação não foi aprovada. Entre em contato com a equipe Patinha para saber como regularizar o cadastro.</p><span class="tag c">Não aprovada</span></div>`;
  if(b.status!=='approved')return `<h1>Área do comerciante</h1><div class="err">Status comercial inválido. Entre em contato com o suporte.</div>`;
+ const activeCount=S.businessAds.length,limit=1,limitReached=activeCount>=limit;
  return `<div class="row sp"><h1>Meu comércio</h1><span class="tag">Aprovado</span></div>
  <div class="card"><b>${h(b.business_name)}</b><div class="mute">${h(b.category)} · ${h(b.city)}</div><p>${h(b.description||'')}</p><div class="mute">Contato: ${h(b.phone)}</div></div>
- <div class="row sp"><h2>Minhas divulgações</h2><button class="sm" onclick="openBusinessAdForm()">+ Nova divulgação</button></div>
+ <div class="card"><div class="row sp"><b>Plano Patinha Comercial</b><span class="tag">${activeCount}/${limit} divulgação ativa</span></div><p class="mute">Seu plano gratuito permite manter 1 divulgação ativa. O plano Pro, com limite maior, será liberado quando a contratação estiver disponível.</p>${limitReached?'<div class="mute">Você atingiu o limite do plano gratuito. Exclua sua divulgação atual para publicar outra ou aguarde a liberação do Patinha Pro.</div>':''}</div>
+ <div class="row sp"><h2>Minhas divulgações</h2><button class="sm" ${limitReached?'disabled title="Limite do plano gratuito atingido"':''} onclick="openBusinessAdForm()">+ Nova divulgação</button></div>
  ${S.businessAds.length?S.businessAds.map(ad=>`<div class="card"><b>${h(ad.title)}</b><div class="tag">${h(ad.category)}</div><p>${h(ad.description)}</p><button class="sm d" onclick="deleteBusinessAd('${ad.id}')">Excluir</button></div>`).join(''):'<div class="empty">Você ainda não publicou divulgações.</div>'}`;
 }
-function openBusinessAdForm(){S.sheet={t:'businessAd'};S.err='';R()}
-function businessAdForm(){return `<h2>Nova divulgação</h2>${S.err?`<div class="err">${h(S.err)}</div>`:''}<form onsubmit="event.preventDefault();saveBusinessAd()"><label for="bat">Título</label><input id="bat" maxlength="100" required><label for="bac">Categoria</label><select id="bac"><option>Produto</option><option>Serviço</option><option>Promoção</option><option>Evento</option></select><label for="bad">Descrição</label><textarea id="bad" rows="4" maxlength="1000" required></textarea><button class="w">Salvar divulgação</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
+function openBusinessAdForm(){if(S.businessAds.length>=1){S.err='O plano Patinha Comercial permite apenas 1 divulgação ativa. Exclua a atual para publicar outra.';R();return}S.sheet={t:'businessAd'};S.err='';R()}
+function businessAdForm(){return `<h2>Nova divulgação</h2><p class="mute">Plano gratuito: 1 divulgação ativa. O limite será ampliado quando o Patinha Pro estiver disponível.</p>${S.err?`<div class="err">${h(S.err)}</div>`:''}<form onsubmit="event.preventDefault();saveBusinessAd()"><label for="bat">Título</label><input id="bat" maxlength="100" required><label for="bac">Categoria</label><select id="bac"><option>Produto</option><option>Serviço</option><option>Promoção</option><option>Evento</option></select><label for="bad">Descrição</label><textarea id="bad" rows="4" maxlength="1000" required></textarea><button class="w">Salvar divulgação</button></form><button class="w g" onclick="sheet(null)">Cancelar</button>`}
 async function saveBusinessAd(){
  const title=$('bat').value.trim(),category=$('bac').value,description=$('bad').value.trim();
  if(!title||!description)return S.err='Informe o título e a descrição.',R();
  if(!S.business||S.business.status!=='approved')return S.err='Sua conta comercial ainda não está aprovada.',R();
+ if(S.businessAds.length>=1)return S.err='Limite atingido: o plano gratuito permite 1 divulgação ativa.',R();
  try{const {data,error}=await db.from('business_ads').insert({user_id:currentUser.id,title,category,description}).select('*').single();if(error)throw error;S.businessAds.unshift(data);S.sheet=null;S.err='';S.msg='Divulgação salva com sucesso.';R()}
  catch(e){S.err='Não foi possível salvar a divulgação: '+(e.message||'tente novamente.');R()}
 }
