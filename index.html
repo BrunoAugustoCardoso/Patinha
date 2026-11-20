@@ -498,7 +498,7 @@ async function deleteBusinessAd(id){
  if(error){S.err='Não foi possível excluir: '+error.message;R();return}
  S.businessAds=S.businessAds.filter(ad=>ad.id!==id);S.msg='Divulgação excluída.';R();
 }
-async function adminBusinessArea(){
+function adminBusinessArea(){
  const list=S.businessProfiles||[];
  return `<h1>Comércios cadastrados</h1><p class="mute">Visualize os estabelecimentos e acompanhe a situação de cada cadastro.</p>${list.length?list.map(b=>`<div class="card"><div class="row sp"><b>${h(b.business_name)}</b><span class="tag ${b.status==='approved'?'':b.status==='rejected'?'c':'p'}">${b.status==='approved'?'Aprovado':b.status==='rejected'?'Rejeitado':'Pendente'}</span></div><div class="mute">${h(b.category)} · ${h(b.city)}</div><p>${h(b.description||'')}</p><div class="mute">Telefone: ${h(b.phone)}</div><div class="row" style="margin-top:10px"><button class="sm" onclick="adminSetBusinessStatus('${b.user_id}','approved')">Aprovar</button><button class="sm d" onclick="adminSetBusinessStatus('${b.user_id}','rejected')">Rejeitar</button></div></div>`).join(''):'<div class="empty">Nenhum comércio cadastrado.</div>'}`;
 }
